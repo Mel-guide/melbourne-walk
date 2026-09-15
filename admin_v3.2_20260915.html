@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>admin_v3.2_20260915.html - Melbourne Master Guide CMS v3.2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --bg-main: #0b1329;
+      --bg-panel: #131f37;
+      --bg-card: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --tier1: #f59e0b;
+      --tier2: #38bdf8;
+      --tier3: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg-main);
+      color: var(--text-main);
+    }
+
+    header {
+      height: 54px;
+      background: #0f172a;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      z-index: 1000;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 15px; color: var(--accent); }
+    .badge-filename {
+      font-family: Consolas, monospace;
+      font-size: 11px;
+      background: #1e293b;
+      color: #38bdf8;
+      border: 1px solid #334155;
+      padding: 3px 7px;
+      border-radius: 4px;
+      font-weight: normal;
+    }
+    .badge-ver {
+      font-size: 11px;
+      background: #0284c7;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+    .btn-action {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-action:hover { background: #334155; }
+    .btn-primary { background: var(--accent-hover); border-color: var(--accent); color: white; }
+    .btn-primary:hover { background: #0369a1; }
+    .btn-new-poi { background: #f59e0b; border-color: #d97706; color: white; font-weight: bold; }
+    .btn-new-poi:hover { background: #d97706; }
+
+    #workspace {
+      flex: 1;
+      display: flex;
+      height: calc(100vh - 54px);
+      overflow: hidden;
+    }
+
+    #panel-navigator {
+      width: 330px;
+      min-width: 290px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+    .search-box { padding: 12px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+    .search-box input, .search-box select {
+      width: 100%;
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 7px 9px;
+      color: var(--text-main);
+      font-size: 12px;
+      outline: none;
+    }
+    .poi-scroll-list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+
+    /* 드래그 앤 드롭 전용 스타일 */
+    .poi-card {
+      background: var(--bg-card);
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 8px 10px;
+      cursor: pointer;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      transition: all 0.15s ease;
+      position: relative;
+      user-select: none;
+    }
+    .poi-card:hover {
+      border-color: var(--accent);
+      background: #1c2b48;
+    }
+    .poi-card.active { border-color: var(--accent); background: #1e3a5f; }
+    .poi-card.dragging {
+      opacity: 0.35;
+      border: 1px dashed var(--accent);
+      background: #0f172a;
+    }
+    .poi-card.drag-over {
+      border-top: 2px solid var(--accent) !important;
+      transform: translateY(-2px);
+    }
+
+    .drag-handle {
+      cursor: grab;
+      color: var(--text-muted);
+      font-size: 16px;
+      padding: 4px 2px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      transition: color 0.15s;
+    }
+    .drag-handle:hover {
+      color: var(--accent);
+    }
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .poi-thumb {
+      width: 38px;
+      height: 38px;
+      border-radius: 4px;
+      background: #334155;
+      object-fit: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .poi-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .poi-meta { flex: 1; min-width: 0; }
+    .poi-title { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+    .poi-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .badge-tier { font-size: 10px; padding: 1px 5px; border-radius: 3px; font-weight: bold; }
+    .badge-t1 { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
+    .badge-t2 { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; }
+    .badge-t3 { background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid #94a3b8; }
+    .badge-group { font-size: 10px; background: #0f172a; color: #a855f7; border: 1px solid #6b21a8; padding: 1px 5px; border-radius: 3px; }
+
+    #panel-inspector {
+      width: 500px;
+      min-width: 420px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .cms-tabs {
+      display: flex;
+      background: #0f172a;
+      border-bottom: 1px solid var(--border-color);
+      overflow-x: auto;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 6px;
+      font-size: 11px;
+      font-weight: bold;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { color: var(--text-main); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
+
+    .inspector-content { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+    
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .section-title { font-size: 12px; font-weight: bold; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
+    
+    label { font-size: 11px; color: var(--text-muted); font-weight: 600; display: flex; flex-direction: column; gap: 4px; }
+    input[type="text"], input[type="number"], select, textarea {
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      padding: 7px 9px;
+      color: var(--text-main);
+      font-size: 12px;
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+    .gate-list { display: flex; flex-direction: column; gap: 6px; }
+    .gate-row { display: flex; gap: 6px; align-items: center; background: var(--bg-main); padding: 6px 8px; border-radius: 5px; border: 1px solid var(--border-color); font-size: 11px; }
+
+    #panel-map { flex: 1; position: relative; height: 100%; }
+    #map { width: 100%; height: 100%; background: #1e293b; }
+
+    .poi-pin {
+      border: 2px solid white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+      transition: transform 0.2s;
+    }
+    .poi-pin.tier-1 { background: #f59e0b; color: #000; width: 28px; height: 28px; font-size: 12px; box-shadow: 0 0 10px #f59e0b; }
+    .poi-pin.tier-2 { background: #38bdf8; color: #fff; width: 24px; height: 24px; font-size: 11px; }
+    .poi-pin.tier-3 { background: #64748b; color: #cbd5e1; width: 20px; height: 20px; font-size: 10px; }
+    .poi-pin.selected { border-color: #fff !important; outline: 3px solid #38bdf8; transform: scale(1.2); z-index: 9999 !important; }
+    
+    .gate-pin {
+      background: #8b5cf6;
+      color: white;
+      border: 2px solid white;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .modal-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      width: 490px;
+      max-width: 92%;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span>🏛️ Melbourne Master Guide CMS</span>
+      <span class="badge-ver">v3.2</span>
+      <span class="badge-filename">admin_v3.2_20260915.html</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn-action" style="background:#7c3aed; border-color:#6d28d9; color:white;" onclick="openGroupModal()">🌐 권역/그룹 관리</button>
+      <button class="btn-action btn-new-poi" onclick="openNewPoiWizard()">+ 새 POI 등록</button>
+      <button class="btn-action" onclick="exportMasterJSON()">💾 JSON 다운로드</button>
+      <button class="btn-action" onclick="document.getElementById('file-importer').click()">📂 JSON 불러오기</button>
+      <input type="file" id="file-importer" accept=".json" style="display:none;" onchange="importMasterJSON(event)">
+    </div>
+  </header>
+
+  <div id="workspace">
+
+    <!-- 1단: 좌측 스팟 네비게이터 (드래그앤드롭 정렬) -->
+    <div id="panel-navigator">
+      <div class="search-box">
+        <label>권역별 필터
+          <select id="navigator-group-filter" onchange="filterPOIList()" style="border-color:#a855f7; font-weight:bold; color:#a855f7;">
+            <option value="ALL">🌐 모든 권역 전체보기</option>
+          </select>
+        </label>
+        <input type="text" id="poi-search" placeholder="명소 검색 (한/영)..." oninput="filterPOIList()">
+      </div>
+      <div class="poi-scroll-list" id="navigator-list"></div>
+    </div>
+
+    <!-- 2단: 중앙 CMS 5탭 인스펙터 -->
+    <div id="panel-inspector">
+      
+      <div class="cms-tabs">
+        <button class="tab-btn active" id="tab-btn-basic" onclick="switchTab('basic')">1. 기본 & GPS</button>
+        <button class="tab-btn" id="tab-btn-heritage" onclick="switchTab('heritage')">2. 인문학/역사 & 태그</button>
+        <button class="tab-btn" id="tab-btn-stories" onclick="switchTab('stories')">3. 오디오 & 스토어</button>
+        <button class="tab-btn" id="tab-btn-gallery" onclick="switchTab('gallery')">4. 갤러리/편의</button>
+        <button class="tab-btn" id="tab-btn-qa" onclick="switchTab('qa')">5. QA 점검</button>
+      </div>
+
+      <div class="inspector-content" id="inspector-scroll-area">
+
+        <!-- TAB 1: 기본 & GPS -->
+        <div id="tab-content-basic" class="tab-pane">
+          <div class="section-card">
+            <div class="section-title">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span id="editor-title" style="color: #38bdf8; font-size: 13px;">명소 편집</span>
+                <span id="editor-status-badge" style="display:none; font-size: 10px; background: #f59e0b; color: #000; padding: 1px 5px; border-radius: 3px; font-weight: bold;">신규 작성 중</span>
+              </div>
+              <label style="flex-direction:row; align-items:center; gap:4px; cursor:pointer;">
+                <input type="checkbox" id="field-is-passthrough" onchange="togglePassThroughMode()">
+                <span style="color:var(--accent); font-size:11px;">관통형 (다중 게이트)</span>
+              </label>
+            </div>
+
+            <input type="hidden" id="field-id">
+
+            <div class="grid-2" style="background: rgba(56, 189, 248, 0.08); padding: 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.3);">
+              <label><span style="color:#38bdf8;">✏️ 명소명 (한글)</span>
+                <input type="text" id="field-name-ko" style="font-weight:bold; font-size:13px;">
+              </label>
+              <label>명소명 (영문)
+                <input type="text" id="field-name-en">
+              </label>
+            </div>
+
+            <div style="background: rgba(168, 85, 247, 0.08); padding: 8px; border-radius: 6px; border: 1px solid rgba(168, 85, 247, 0.3);">
+              <label><span style="color:#a855f7;">🌐 소속 권역 그룹 (Region)</span>
+                <select id="field-group-id" style="font-weight:bold; border-color:#a855f7;">
+                </select>
+              </label>
+              <label><span style="color:#a855f7;">🚗 이동 형태</span>
+                <div style="display:flex; gap:4px;">
+                  <select id="field-travel-mode" style="flex:1;">
+                    <option value="walking">🚶 도보 투어</option>
+                    <option value="driving">🚗 드라이브 투어</option>
+                  </select>
+                  <button type="button" class="btn-action" style="padding:2px 8px; font-size:10px;" onclick="applyPresetPrompt()" title="권장 반경 적용">반경 초기화</button>
+                </div>
+              </label>
+            </div>
+
+            <div style="background: rgba(16, 185, 129, 0.08); padding: 8px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.3); display:flex; flex-direction:column; gap:4px;">
+              <label><span style="color:#10b981;">📍 도로명 주소 (내비게이션 딥링크 / 맵 표시용)</span>
+                <div style="display:flex; gap:6px;">
+                  <input type="text" id="field-address" placeholder="예: Flinders St, Melbourne VIC 3000" style="flex:1;">
+                  <button type="button" id="btn-geocode" class="btn-action" style="background:#10b981; border-color:#059669; color:white; font-weight:bold;" onclick="searchAddressAndSetCoords()">🔍 주소 검색</button>
+                </div>
+              </label>
+              <div id="geocode-status" style="font-size:11px; color:#94a3b8; margin-top:2px;">주소를 입력하고 검색하면 GPS 좌표가 자동 갱신됩니다.</div>
+            </div>
+
+            <div class="grid-3">
+              <label><span style="color:#f59e0b;">⭐ 투어 Tier</span>
+                <select id="field-tier">
+                  <option value="1">⭐ Tier 1 (필수)</option>
+                  <option value="2">✨ Tier 2 (추천)</option>
+                  <option value="3">☕ Tier 3 (선택)</option>
+                </select>
+              </label>
+              <label>카테고리
+                <select id="field-category">
+                  <option value="랜드마크">랜드마크</option>
+                  <option value="골목/레인웨이">골목/레인웨이</option>
+                  <option value="문화/역사">문화/역사</option>
+                  <option value="문화/예술">문화/예술</option>
+                  <option value="쇼핑/아케이드">쇼핑/아케이드</option>
+                  <option value="쇼핑/마켓">쇼핑/마켓</option>
+                  <option value="쇼핑/거리">쇼핑/거리</option>
+                  <option value="자연/해변/전망">자연/해변/전망</option>
+                  <option value="와이너리/미식">와이너리/미식</option>
+                  <option value="공원/휴식">공원/휴식</option>
+                </select>
+              </label>
+              <label>권장 체류(분)
+                <input type="number" id="field-stay" value="15" min="0" step="5">
+              </label>
+            </div>
+
+            <div class="grid-2">
+              <label>표시 위도 (Lat)
+                <input type="number" step="any" id="field-lat" oninput="updatePreviewMarker()">
+              </label>
+              <label>표시 경도 (Lng)
+                <input type="number" step="any" id="field-lng" oninput="updatePreviewMarker()">
+              </label>
+            </div>
+          </div>
+
+          <div class="section-card" style="border-left: 3px solid #f59e0b;">
+            <div class="section-title">
+              <span style="color:#f59e0b;">📡 GPS Geofence 트리거 설정</span>
+            </div>
+            <div class="grid-2">
+              <label>도착 반경 (Arrival Radius)
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <input type="range" id="field-gps-arrival" min="10" max="600" step="5" value="25" oninput="document.getElementById('lbl-gps-arrival').innerText = this.value; updateGeofenceCircles();">
+                  <span style="font-size:11px; width:45px; color:#f59e0b; font-weight:bold;"><b id="lbl-gps-arrival">25</b>m</span>
+                </div>
+              </label>
+              <label>이탈 반경 (Exit Radius)
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <input type="range" id="field-gps-exit" min="20" max="1000" step="10" value="40" oninput="document.getElementById('lbl-gps-exit').innerText = this.value; updateGeofenceCircles();">
+                  <span style="font-size:11px; width:45px; color:#ef4444; font-weight:bold;"><b id="lbl-gps-exit">40</b>m</span>
+                </div>
+              </label>
+            </div>
+
+            <div style="display:flex; gap:16px; margin-top:4px;">
+              <label style="flex-direction:row; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="field-gps-autoplay" checked>
+                <span style="font-size:11px;">▶️ 반경 진입 시 자동 재생 (Auto-play)</span>
+              </label>
+              <label style="flex-direction:row; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="field-gps-pause-stop" checked>
+                <span style="font-size:11px;">⏸️ 멈춰 서면 일시정지</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 관통 게이트 (출입구) 관리 섹션 -->
+          <div id="gate-section" class="section-card" style="display:none; border-left: 3px solid #a855f7;">
+            <div class="section-title">
+              <b style="color:#a855f7;">🚪 관통 게이트 (출입구) 관리</b>
+              <button type="button" id="btn-add-gate" class="btn-action" style="padding:4px 10px; font-size:11px; background:#7c3aed; color:white; border-color:#6d28d9;" onclick="addGateFromMap()">+ 지도 클릭 추가</button>
+            </div>
+            <div id="gate-mode-tip" style="font-size:11px; color:#c084fc; display:none; background:rgba(124, 58, 237, 0.1); padding:6px; border-radius:4px; border:1px dashed #7c3aed;">
+              👉 <b>지도에서 게이트 위치를 클릭하세요!</b> (완료 후 이름 입력 창이 뜹니다)
+            </div>
+            <div id="gate-items-wrap" class="gate-list"></div>
+          </div>
+        </div>
+
+        <!-- TAB 2: 인문학/역사 DB & 태그 시스템 -->
+        <div id="tab-content-heritage" class="tab-pane" style="display:none;">
+          <div class="section-card">
+            <div class="section-title">
+              <span>🏛️ 관광통역가이드 역사·건축 스펙</span>
+            </div>
+            <div class="grid-2">
+              <label>건축 연도 (Built Year)
+                <input type="text" id="field-heritage-year" placeholder="예: 1862년">
+              </label>
+              <label>설계자 / 건축가 (Architect)
+                <input type="text" id="field-heritage-architect" placeholder="예: J.J. Clark">
+              </label>
+            </div>
+            <div class="grid-2">
+              <label>건축 양식 (Architecture Style)
+                <input type="text" id="field-heritage-style" placeholder="예: Renaissance Revival">
+              </label>
+              <label>역사 등재 수준 (Heritage Level)
+                <input type="text" id="field-heritage-level" placeholder="예: Victorian Heritage Register">
+              </label>
+            </div>
+            <div class="grid-3">
+              <label>역사적 시대
+                <input type="text" id="field-heritage-period" placeholder="Victorian Gold Rush">
+              </label>
+              <label style="flex-direction:row; align-items:center; gap:6px; margin-top:20px; cursor:pointer;">
+                <input type="checkbox" id="field-heritage-goldrush">
+                <span style="font-size:11px; color:#f59e0b; font-weight:bold;">🪙 골드러시 연계</span>
+              </label>
+              <label style="flex-direction:row; align-items:center; gap:6px; margin-top:20px; cursor:pointer;">
+                <input type="checkbox" id="field-heritage-verified">
+                <span style="font-size:11px; color:#10b981; font-weight:bold;">✓ 공인 검증됨</span>
+              </label>
+            </div>
+            <label>원주민 역사 스토리 (First Nations)
+              <input type="text" id="field-heritage-aboriginal" placeholder="예: Wurundjeri Woi-wurrung Country">
+            </label>
+            <label>공인 출처 링크/참고문헌 (Sources)
+              <input type="text" id="field-heritage-sources" placeholder="예: Victorian Heritage Database (VHR H1083)">
+            </label>
+
+            <label style="margin-top:4px;"><span style="color:#38bdf8;">🏷️ 취향별 추천 태그 (사용자 앱 필터링 연동)</span>
+              <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; background:var(--bg-main); padding:8px; border-radius:5px; border:1px solid var(--border-color); margin-top:4px;">
+                <label style="flex-direction:row; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" class="poi-tag-chk" value="history"> <span style="font-size:11px;">역사 (History)</span></label>
+                <label style="flex-direction:row; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" class="poi-tag-chk" value="architecture"> <span style="font-size:11px;">건축 (Arch)</span></label>
+                <label style="flex-direction:row; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" class="poi-tag-chk" value="gold_rush"> <span style="font-size:11px;">골드러시</span></label>
+                <label style="flex-direction:row; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" class="poi-tag-chk" value="nature"> <span style="font-size:11px;">자연/공원</span></label>
+                <label style="flex-direction:row; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" class="poi-tag-chk" value="shopping"> <span style="font-size:11px;">쇼핑/마켓</span></label>
+                <label style="flex-direction:row; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" class="poi-tag-chk" value="coffee"> <span style="font-size:11px;">커피/미식</span></label>
+                <label style="flex-direction:row; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" class="poi-tag-chk" value="photo"> <span style="font-size:11px;">포토스팟</span></label>
+                <label style="flex-direction:row; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" class="poi-tag-chk" value="family"> <span style="font-size:11px;">가족 추천</span></label>
+              </div>
+            </label>
+          </div>
+
+          <div class="section-card" style="border-left: 3px solid #7c3aed;">
+            <div class="section-title">
+              <span style="color:#a855f7;">🔒 가이드 전용 비공개 노트 (Guide Notes - 투어 앱 미노출)</span>
+            </div>
+            <label>현장 인솔 시 가이드 꿀팁 (Tip)
+              <input type="text" id="field-guide-tip" placeholder="예: 손님들 그늘에 모아두고 우측에서 설명">
+            </label>
+            <label>돌발 질문 FAQ (슬래시(/) 또는 콤마 분리)
+              <textarea id="field-guide-faq" rows="2" placeholder="Q: 금괴는 진짜인가요? / A: 당시 복제품입니다."></textarea>
+            </label>
+            <label>현장 주의사항 (Warning)
+              <input type="text" id="field-guide-warning" placeholder="예: 월요일 전시실 휴관 여부 재확인 필수">
+            </label>
+          </div>
+        </div>
+
+        <!-- TAB 3: 오디오 & 스토어 -->
+        <div id="tab-content-stories" class="tab-pane" style="display:none;">
+          <div class="section-card" style="background: rgba(168, 85, 247, 0.05); border: 1px solid #9333ea;">
+            <div class="section-title">
+              <span style="color:#c084fc;">🇰🇷 한국어 오디오 파일 (Streaming URL)</span>
+              <span id="audio-ko-dur-tag" style="font-size:11px; color:#a855f7; font-weight:bold;">0초</span>
+            </div>
+            <label>한국어 음원 URL (포커스 아웃 시 자동 길이 측정)
+              <input type="text" id="field-audio-ko-url" placeholder="audio/flinders_ko.mp3" onchange="updateAudioDuration('ko', this.value)">
+            </label>
+            <audio id="audio-player-ko" controls style="width:100%; height:32px;" onloadedmetadata="onAudioLoaded('ko')"></audio>
+          </div>
+
+          <div class="section-card" style="background: rgba(56, 189, 248, 0.05); border: 1px solid #0284c7;">
+            <div class="section-title">
+              <span style="color:#38bdf8;">🇦🇺 English Audio File (Streaming URL)</span>
+              <span id="audio-en-dur-tag" style="font-size:11px; color:#38bdf8; font-weight:bold;">0초</span>
+            </div>
+            <label>English Audio URL (On focus out auto-duration)
+              <input type="text" id="field-audio-en-url" placeholder="audio/flinders_en.mp3" onchange="updateAudioDuration('en', this.value)">
+            </label>
+            <audio id="audio-player-en" controls style="width:100%; height:32px;" onloadedmetadata="onAudioLoaded('en')"></audio>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">
+              <span>🎙️ 대본 검토용 TTS 스튜디오</span>
+              <button type="button" class="btn-action" style="padding:2px 8px; font-size:10px; background:#0284c7; color:white;" onclick="loadCombinedScriptToStudio()">📥 5단계 대본 합치기</button>
+            </div>
+            <label>테스트 텍스트 멘트
+              <textarea id="studio-tts-text" rows="3" placeholder="대본을 불러와 음성으로 검토해 보세요."></textarea>
+            </label>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-action btn-primary" style="flex:1; justify-content:center;" onclick="playStudioTTS()">▶ TTS 재생</button>
+              <button type="button" class="btn-action" style="justify-content:center; background:var(--danger); border-color:var(--danger);" onclick="stopStudioTTS()">⏹ 정지</button>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">
+              <span>📝 5단계 스토리 빌더 (한국어 / English)</span>
+            </div>
+            
+            <div style="display:flex; gap:6px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">
+              <button type="button" class="btn-action active" id="btn-lang-ko" onclick="toggleStoryLang('ko')">🇰🇷 한국어 대본</button>
+              <button type="button" class="btn-action" id="btn-lang-en" onclick="toggleStoryLang('en')">🇦🇺 English Script</button>
+            </div>
+
+            <div id="story-block-ko" style="display:flex; flex-direction:column; gap:8px;">
+              <label>① 인트로 (현장 도착 시 첫 마디)
+                <textarea id="field-story-ko-intro" rows="2"></textarea>
+              </label>
+              <label>② 메인 역사/자연 해설
+                <textarea id="field-story-ko-main" rows="3"></textarea>
+              </label>
+              <label>③ 숨겨진 비하인드 스토리 (Hidden Secret)
+                <textarea id="field-story-ko-hidden" rows="2"></textarea>
+              </label>
+              <label>④ 추천 포토스팟 가이드
+                <input type="text" id="field-story-ko-photo">
+              </label>
+              <label>⑤ 가이드 트리비아 (Trivia)
+                <input type="text" id="field-story-ko-trivia">
+              </label>
+            </div>
+
+            <div id="story-block-en" style="display:none; flex-direction:column; gap:8px;">
+              <label>① Intro (Arrival sentence)
+                <textarea id="field-story-en-intro" rows="2"></textarea>
+              </label>
+              <label>② Main Story
+                <textarea id="field-story-en-main" rows="3"></textarea>
+              </label>
+              <label>③ Hidden Secret
+                <textarea id="field-story-en-hidden" rows="2"></textarea>
+              </label>
+              <label>④ Photo Spot Guide
+                <input type="text" id="field-story-en-photo">
+              </label>
+              <label>⑤ Guide Trivia
+                <input type="text" id="field-story-en-trivia">
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: 갤러리/편의 -->
+        <div id="tab-content-gallery" class="tab-pane" style="display:none;">
+          <div class="section-card">
+            <div class="section-title">
+              <span>📸 사진 갤러리 & 길안내 단서</span>
+            </div>
+            <label>대표 사진 (Hero Photo)
+              <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                <input type="file" id="field-thumb-file" accept="image/*" style="display:none;" onchange="handleImageFileSelect(event)">
+                <button type="button" class="btn-action" style="flex:1; justify-content:center; background:#3b82f6; border-color:#2563eb; color:white;" onclick="document.getElementById('field-thumb-file').click()">📁 컴퓨터에서 사진 선택</button>
+              </div>
+              <input type="text" id="field-thumb-url" placeholder="사진 URL 또는 파일 선택 시 자동 변환" oninput="renderImagePreview(this.value)">
+            </label>
+            <div id="thumb-preview-box" style="width: 100%; height: 140px; border-radius: 6px; background: #0b1329; border: 1px dashed #334155; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+              <span style="font-size: 11px; color: #94a3b8;">등록된 사진 미리보기</span>
+            </div>
+
+            <label style="margin-top:6px;"><span style="color:#38bdf8;">🧭 현장 길찾기 보행/차량 진입 힌트</span>
+              <input type="text" id="field-wayfinding-hint" placeholder="예: 시계탑 앞 횡단보도 건너 진입">
+            </label>
+            
+            <div class="grid-2" style="margin-top:4px;">
+              <label>갈림길 시각 단서 사진 URL
+                <input type="text" id="field-clue-url" placeholder="images/turn_sign.jpg">
+              </label>
+              <label>운영 / 관통 가능 시간
+                <input type="text" id="field-opening-hours" placeholder="예: 10:00 - 18:00">
+              </label>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">
+              <span>♿ 현장 편의시설 인프라</span>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+              <label style="flex-direction:row; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="field-has-toilet">
+                <span style="font-size:11px;">🚻 화장실</span>
+              </label>
+              <label style="flex-direction:row; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="field-has-wheelchair">
+                <span style="font-size:11px;">♿ 휠체어 진입</span>
+              </label>
+              <label style="flex-direction:row; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="field-has-stroller">
+                <span style="font-size:11px;">👶 유모차 용이</span>
+              </label>
+              <label style="flex-direction:row; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="field-has-water">
+                <span style="font-size:11px;">💧 급수대</span>
+              </label>
+              <label style="flex-direction:row; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="field-has-seating">
+                <span style="font-size:11px;">🪑 벤치/쉼터</span>
+              </label>
+              <label style="flex-direction:row; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="field-has-stairs">
+                <span style="font-size:11px;">⚠️ 계단 있음</span>
+              </label>
+              <label style="flex-direction:row; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="field-has-parking">
+                <span style="font-size:11px;">🅿️ 주차장 완비</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 5: QA 점검 -->
+        <div id="tab-content-qa" class="tab-pane" style="display:none;">
+          <div class="section-card">
+            <div class="section-title">
+              <span>📊 POI 품질 QA 점검 대시보드</span>
+              <span id="qa-score-badge" style="font-size:12px; font-weight:bold; color:#10b981;">Score: 0 / 100</span>
+            </div>
+            <div id="qa-checklist-wrap" style="display:flex; flex-direction:column; gap:6px; font-size:11px;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:4px;">
+          <button class="btn-action btn-primary" style="flex:2; justify-content:center; padding:12px; font-size:13px; font-weight:bold;" onclick="saveCurrentSpot()">💾 현재 POI 저장 (CMS v3.2)</button>
+          <button class="btn-action" style="flex:1; justify-content:center; background:var(--danger); border-color:var(--danger);" onclick="deleteCurrentSpot()">삭제</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 3단: 우측 인터랙티브 맵 -->
+    <div id="panel-map">
+      <div id="map"></div>
+    </div>
+
+  </div>
+
+  <!-- 신규 POI 등록 위저드 -->
+  <div id="new-poi-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <b style="color:var(--accent); font-size:14px;">✨ 새 POI 등록 위저드</b>
+        <button onclick="closeNewPoiWizard()" style="background:none; border:none; color:white; font-size:16px; cursor:pointer;">✕</button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <label><span style="color:#a855f7;">1단계: 소속 권역 그룹(Region) 선택</span>
+          <select id="wizard-group-id" onchange="updateWizardModeHint(this.value)" style="border-color:#a855f7; font-weight:bold; padding:8px;">
+          </select>
+        </label>
+        <div id="wizard-mode-hint" style="font-size:11px; color:#38bdf8; background:#0f172a; padding:6px 8px; border-radius:4px; border:1px solid #1e293b;">
+          기본 모드: 도보 투어 (권장 반경 25m / 40m)
+        </div>
+
+        <label><span style="color:#38bdf8;">2단계: 명소명 (한글)</span>
+          <input type="text" id="wizard-name-ko" placeholder="예: 아서스 시트 전망대" style="padding:8px; font-size:13px;">
+        </label>
+        <label>명소명 (영문)
+          <input type="text" id="wizard-name-en" placeholder="예: Arthurs Seat" style="padding:8px;">
+        </label>
+
+        <label><span style="color:#10b981;">3단계 (선택): 도로명 주소 또는 장소명</span>
+          <input type="text" id="wizard-address" placeholder="예: 790 Arthurs Seat Rd, Dromana VIC 3936" style="padding:8px;">
+        </label>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:8px;">
+        <button class="btn-action" onclick="closeNewPoiWizard()">취소</button>
+        <button class="btn-action btn-primary" onclick="confirmNewPoiWizard()">생성 후 좌표 자동 검색 ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 권역/그룹 관리 모달 -->
+  <div id="group-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <b style="color:var(--accent); font-size:14px;">🌐 권역/그룹(Region) 관리자</b>
+        <button onclick="closeGroupModal()" style="background:none; border:none; color:white; font-size:16px; cursor:pointer;">✕</button>
+      </div>
+      
+      <div style="display:flex; gap:6px;">
+        <input type="text" id="new-group-id" placeholder="그룹 ID (영문/숫자/언더바)" style="flex:1;">
+        <input type="text" id="new-group-name" placeholder="그룹 표시명" style="flex:1;">
+        <button class="btn-action btn-primary" onclick="addNewGroup()">+ 추가</button>
+      </div>
+
+      <div id="group-list-box" style="max-height: 280px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-top:4px;"></div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:6px;">
+        <button class="btn-action" onclick="closeGroupModal()">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    const DEFAULT_GROUPS = [
+      { id: "city_cbd", name: "멜버른 시티 (CBD 도보)", defaultMode: "walking" },
+      { id: "inner_mel", name: "시티 주변 (Inner Mel)", defaultMode: "driving" },
+      { id: "dandenong", name: "단데농 & 퍼핑빌리", defaultMode: "driving" },
+      { id: "yarra_valley", name: "야라 밸리 (와이너리)", defaultMode: "driving" },
+      { id: "phillip_island", name: "필립 아일랜드 (펭귄)", defaultMode: "driving" },
+      { id: "great_ocean_road", name: "그레이트 오션 로드", defaultMode: "driving" },
+      { id: "ballarat", name: "발라렛 & 골드필드", defaultMode: "driving" },
+      { id: "mornington", name: "모닝턴 반도 (온천/바다)", defaultMode: "driving" },
+      { id: "myvillage", name: "우리동네 산책", defaultMode: "driving" }
+    ];
+
+    let CURRENT_PROJECT = JSON.parse(localStorage.getItem('melbourne_master_guide_v3_2')) || {
+      schemaVersion: "3.2",
+      project: "Melbourne Master Guide",
+      fileName: "admin_v3.2_20260915.html",
+      updatedAt: "2026-09-15",
+      groups: DEFAULT_GROUPS,
+      config: { maxWalkingMin: 12, maxAngleBacktrack: 150, targetDurationMin: 90 },
+      pois: []
+    };
+
+    let selectedPoiId = CURRENT_PROJECT.pois.length > 0 ? CURRENT_PROJECT.pois[0].id : null;
+    let isAddingGateMode = false;
+    let tempGates = [];
+    let currentStoryLang = 'ko';
+
+    // 드래그 앤 드롭 상태 추적 변수
+    let draggedPoiIndex = null;
+
+    const map = L.map('map').setView([-37.8140, 144.9660], 14);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Tiles © Esri'
+    }).addTo(map);
+
+    let markersLayer = L.layerGroup().addTo(map);
+    let gatesLayer = L.layerGroup().addTo(map);
+    let geofenceLayer = L.layerGroup().addTo(map);
+    let previewMarker = null;
+
+    map.on('click', function(e) {
+      const lat = Number(e.latlng.lat.toFixed(6));
+      const lng = Number(e.latlng.lng.toFixed(6));
+
+      if (isAddingGateMode) {
+        const gName = prompt("새 관통 게이트 이름을 입력하세요:", `게이트 ${tempGates.length + 1}`);
+        if (gName && gName.trim()) {
+          tempGates.push({ id: "gate_" + Date.now(), name: gName.trim(), lat, lng });
+          renderGatesUI();
+        }
+        isAddingGateMode = false;
+        document.getElementById('map').style.cursor = '';
+        document.getElementById('gate-mode-tip').style.display = 'none';
+        document.getElementById('btn-add-gate').style.background = '#7c3aed';
+        document.getElementById('btn-add-gate').innerText = '+ 지도 클릭 추가';
+      } else {
+        document.getElementById('field-lat').value = lat;
+        document.getElementById('field-lng').value = lng;
+        updatePreviewMarker();
+      }
+    });
+
+    function addGateFromMap() {
+      isAddingGateMode = !isAddingGateMode;
+      const tipBox = document.getElementById('gate-mode-tip');
+      const btn = document.getElementById('btn-add-gate');
+
+      if (isAddingGateMode) {
+        document.getElementById('map').style.cursor = 'crosshair';
+        tipBox.style.display = 'block';
+        btn.style.background = '#ef4444';
+        btn.innerText = '✕ 추가 취소';
+      } else {
+        document.getElementById('map').style.cursor = '';
+        tipBox.style.display = 'none';
+        btn.style.background = '#7c3aed';
+        btn.innerText = '+ 지도 클릭 추가';
+      }
+    }
+
+    function switchTab(tabKey) {
+      const tabs = ['basic', 'heritage', 'stories', 'gallery', 'qa'];
+      tabs.forEach(t => {
+        document.getElementById(`tab-content-${t}`).style.display = (t === tabKey) ? 'block' : 'none';
+        document.getElementById(`tab-btn-${t}`).classList.toggle('active', t === tabKey);
+      });
+      if (tabKey === 'qa') evaluateQA();
+    }
+
+    function toggleStoryLang(lang) {
+      currentStoryLang = lang;
+      document.getElementById('story-block-ko').style.display = (lang === 'ko') ? 'flex' : 'none';
+      document.getElementById('story-block-en').style.display = (lang === 'en') ? 'flex' : 'none';
+      document.getElementById('btn-lang-ko').classList.toggle('active', lang === 'ko');
+      document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+    }
+
+    function updateAudioDuration(lang, url) {
+      if (!url || !url.trim()) return;
+      const audioTag = document.getElementById(`audio-player-${lang}`);
+      audioTag.src = url.trim();
+      audioTag.onloadedmetadata = function() {
+        const dur = Math.round(audioTag.duration || 0);
+        document.getElementById(`audio-${lang}-dur-tag`).innerText = `${dur}초`;
+      };
+    }
+
+    function onAudioLoaded(lang) {
+      const audioTag = document.getElementById(`audio-player-${lang}`);
+      const dur = Math.round(audioTag.duration || 0);
+      document.getElementById(`audio-${lang}-dur-tag`).innerText = `${dur}초`;
+    }
+
+    async function searchAddressAndSetCoords(customQuery = null) {
+      const query = customQuery || document.getElementById('field-address').value.trim();
+      const statusBox = document.getElementById('geocode-status');
+
+      if (!query) { alert("검색할 주소나 명칭을 입력하세요."); return null; }
+      if (statusBox) statusBox.innerHTML = `⏳ 위치 검색 중...`;
+
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=au&limit=1`;
+        const resp = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+        const data = await resp.json();
+
+        if (data && data.length > 0) {
+          const res = data[0];
+          const lat = parseFloat(Number(res.lat).toFixed(6));
+          const lng = parseFloat(Number(res.lon).toFixed(6));
+
+          document.getElementById('field-lat').value = lat;
+          document.getElementById('field-lng').value = lng;
+          if (statusBox) statusBox.innerHTML = `✅ <b>검색 완료:</b> ${escapeHtml(res.display_name.split(',').slice(0,2).join(','))} (${lat}, ${lng})`;
+
+          updatePreviewMarker();
+          map.flyTo([lat, lng], 16, { animate: true, duration: 1.2 });
+          return { lat, lng };
+        } else {
+          if (statusBox) statusBox.innerHTML = `❌ 위치를 찾지 못했습니다.`;
+          alert("주소를 찾을 수 없습니다.");
+          return null;
+        }
+      } catch (err) {
+        if (statusBox) statusBox.innerHTML = `⚠️ 검색 오류 발생`;
+        alert("좌표 검색 실패: " + err.message);
+        return null;
+      }
+    }
+
+    function loadCombinedScriptToStudio() {
+      const isKo = (currentStoryLang === 'ko');
+      const intro = document.getElementById(isKo ? 'field-story-ko-intro' : 'field-story-en-intro').value.trim();
+      const main = document.getElementById(isKo ? 'field-story-ko-main' : 'field-story-en-main').value.trim();
+      const hidden = document.getElementById(isKo ? 'field-story-ko-hidden' : 'field-story-en-hidden').value.trim();
+      const photo = document.getElementById(isKo ? 'field-story-ko-photo' : 'field-story-en-photo').value.trim();
+      const trivia = document.getElementById(isKo ? 'field-story-ko-trivia' : 'field-story-en-trivia').value.trim();
+
+      const combined = [intro, main, hidden, photo, trivia].filter(Boolean).join('\n\n');
+      document.getElementById('studio-tts-text').value = combined;
+      alert("대본이 통합 로드되었습니다.");
+    }
+
+    function playStudioTTS() {
+      const text = document.getElementById('studio-tts-text').value.trim();
+      if (!text) { alert("텍스트가 비어 있습니다."); return; }
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = currentStoryLang === 'ko' ? 'ko-KR' : 'en-AU';
+      window.speechSynthesis.speak(utt);
+    }
+    function stopStudioTTS() { window.speechSynthesis.cancel(); }
+
+    function populateGroupSelects() {
+      const navFilter = document.getElementById('navigator-group-filter');
+      const fieldSelect = document.getElementById('field-group-id');
+      const wizardSelect = document.getElementById('wizard-group-id');
+      const currentFilterVal = navFilter.value;
+      const currentFieldVal = fieldSelect.value;
+
+      navFilter.innerHTML = '<option value="ALL">🌐 모든 권역 전체보기</option>';
+      fieldSelect.innerHTML = '';
+      wizardSelect.innerHTML = '';
+
+      CURRENT_PROJECT.groups.forEach(g => {
+        const safeId = escapeHtml(g.id);
+        const safeName = escapeHtml(g.name);
+        navFilter.innerHTML += `<option value="${safeId}">${safeName}</option>`;
+        fieldSelect.innerHTML += `<option value="${safeId}">${safeName}</option>`;
+        wizardSelect.innerHTML += `<option value="${safeId}">${safeName}</option>`;
+      });
+
+      navFilter.value = currentFilterVal || "ALL";
+      if (currentFieldVal && CURRENT_PROJECT.groups.some(g => g.id === currentFieldVal)) {
+        fieldSelect.value = currentFieldVal;
+      }
+    }
+
+    function openNewPoiWizard() {
+      populateGroupSelects();
+      const currentFilter = document.getElementById('navigator-group-filter').value;
+      const targetGroup = (currentFilter && currentFilter !== 'ALL') ? currentFilter : CURRENT_PROJECT.groups[0].id;
+      document.getElementById('wizard-group-id').value = targetGroup;
+      updateWizardModeHint(targetGroup);
+
+      document.getElementById('wizard-name-ko').value = '';
+      document.getElementById('wizard-name-en').value = '';
+      document.getElementById('wizard-address').value = '';
+      document.getElementById('new-poi-modal').style.display = 'flex';
+    }
+
+    function closeNewPoiWizard() { document.getElementById('new-poi-modal').style.display = 'none'; }
+
+    function updateWizardModeHint(groupId) {
+      const grp = CURRENT_PROJECT.groups.find(g => g.id === groupId);
+      const isDrive = grp ? grp.defaultMode === 'driving' : false;
+      const hintBox = document.getElementById('wizard-mode-hint');
+      if (isDrive) {
+        hintBox.innerHTML = `🚗 기본 모드: <b>드라이브 투어</b> (반경 250m / 450m)`;
+        hintBox.style.color = '#f59e0b';
+      } else {
+        hintBox.innerHTML = `🚶 기본 모드: <b>도보 투어</b> (반경 25m / 40m)`;
+        hintBox.style.color = '#38bdf8';
+      }
+    }
+
+    async function confirmNewPoiWizard() {
+      const groupId = document.getElementById('wizard-group-id').value;
+      const nameKo = document.getElementById('wizard-name-ko').value.trim() || '새 오디오 스팟';
+      const nameEn = document.getElementById('wizard-name-en').value.trim() || 'New Audio Spot';
+      const address = document.getElementById('wizard-address').value.trim();
+      const grp = CURRENT_PROJECT.groups.find(g => g.id === groupId);
+      const travelMode = grp ? grp.defaultMode : 'walking';
+
+      const newId = 'poi_' + Date.now();
+      const newSpot = {
+        id: newId, groupId, travelMode, nameKo, nameEn, address,
+        tier: 2, category: "랜드마크", stayMin: travelMode === 'driving' ? 30 : 15,
+        lat: -37.8140, lng: 144.9660, thumbUrl: "",
+        audio: { ko: { fileUrl: "", durationSec: 0 }, en: { fileUrl: "", durationSec: 0 } },
+        gps: { arrivalRadius: travelMode === 'driving' ? 250 : 25, exitRadius: travelMode === 'driving' ? 450 : 40, autoPlay: true, pauseIfStopped: true },
+        heritage: { builtYear: "", architect: "", architecture: "", heritageLevel: "", goldRushRelated: false, historicalPeriod: "", aboriginalStory: "", sources: [], verified: false, keywords: [] },
+        tags: ["history"],
+        stories: { ko: { intro: "", main: "", hidden: "", photoSpot: "", trivia: "" }, en: { intro: "", main: "", hidden: "", photoSpot: "", trivia: "" } },
+        guideNotes: { spotTip: "", faq: [], warning: "" },
+        wayfinding: { hint: "", clueUrl: "" }, openingHours: "",
+        facilities: { toilet: false, wheelchair: false, stroller: false, water: false, seating: false, stairs: false, parking: travelMode === 'driving' },
+        isPassThrough: false, gates: []
+      };
+
+      CURRENT_PROJECT.pois.unshift(newSpot);
+      closeNewPoiWizard();
+      persist();
+      selectPOI(newId, true);
+      switchTab('basic');
+
+      if (address) {
+        document.getElementById('field-address').value = address;
+        await searchAddressAndSetCoords(address);
+      }
+    }
+
+    function openGroupModal() { renderGroupListModal(); document.getElementById('group-modal').style.display = 'flex'; }
+    function closeGroupModal() { document.getElementById('group-modal').style.display = 'none'; }
+
+    function renderGroupListModal() {
+      const box = document.getElementById('group-list-box');
+      box.innerHTML = '';
+      CURRENT_PROJECT.groups.forEach((g) => {
+        const poiCount = CURRENT_PROJECT.pois.filter(p => p.groupId === g.id).length;
+        const safeId = escapeHtml(g.id);
+        const safeName = escapeHtml(g.name);
+        box.innerHTML += `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); padding:8px; border-radius:5px; border:1px solid var(--border-color); font-size:12px;">
+            <div><b style="color:var(--accent);">${safeName}</b> <span style="font-size:11px; color:var(--text-muted);">(${safeId} · ${poiCount}개)</span></div>
+            <div style="display:flex; gap:6px;">
+              <button onclick="editGroupName('${safeId}')" style="background:#0284c7; border:none; color:white; padding:3px 7px; border-radius:3px; cursor:pointer;">수정</button>
+              <button onclick="deleteGroup('${safeId}')" style="background:#ef4444; border:none; color:white; padding:3px 7px; border-radius:3px; cursor:pointer;">삭제</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function addNewGroup() {
+      const rawId = document.getElementById('new-group-id').value.trim().toLowerCase();
+      const id = rawId.replace(/[^a-z0-9_]/g, '');
+      const name = document.getElementById('new-group-name').value.trim();
+
+      if (!id || !name) { alert("그룹 ID와 이름을 올바르게 입력하세요 (ID는 영문/숫자/언더바만 가능)."); return; }
+      if (CURRENT_PROJECT.groups.some(g => g.id === id)) { alert("이미 존재하는 그룹 ID입니다."); return; }
+
+      CURRENT_PROJECT.groups.push({ id, name, defaultMode: "driving" });
+      document.getElementById('new-group-id').value = '';
+      document.getElementById('new-group-name').value = '';
+      populateGroupSelects(); renderGroupListModal(); persist();
+    }
+
+    function editGroupName(id) {
+      const g = CURRENT_PROJECT.groups.find(x => x.id === id);
+      if (!g) return;
+      const newName = prompt("새 그룹명:", g.name);
+      if (newName && newName.trim()) { g.name = newName.trim(); populateGroupSelects(); renderGroupListModal(); renderNavigator(); persist(); }
+    }
+
+    function deleteGroup(id) {
+      if (CURRENT_PROJECT.groups.length <= 1) { alert("최소 1개 이상 필요합니다."); return; }
+      const fallbackId = CURRENT_PROJECT.groups.find(x => x.id !== id).id;
+      CURRENT_PROJECT.pois.forEach(p => { if (p.groupId === id) p.groupId = fallbackId; });
+      CURRENT_PROJECT.groups = CURRENT_PROJECT.groups.filter(x => x.id !== id);
+      populateGroupSelects(); renderGroupListModal(); selectPOI(selectedPoiId, false); persist();
+    }
+
+    function applyPresetPrompt() {
+      const mode = document.getElementById('field-travel-mode').value;
+      const targetArrival = (mode === 'driving') ? 250 : 25;
+      const targetExit = (mode === 'driving') ? 450 : 40;
+      if (confirm(`반경을 초기화하시겠습니까? (도착:${targetArrival}m, 이탈:${targetExit}m)`)) {
+        document.getElementById('field-gps-arrival').value = targetArrival;
+        document.getElementById('lbl-gps-arrival').innerText = targetArrival;
+        document.getElementById('field-gps-exit').value = targetExit;
+        document.getElementById('lbl-gps-exit').innerText = targetExit;
+        updateGeofenceCircles();
+      }
+    }
+
+    function persist() {
+      CURRENT_PROJECT.updatedAt = "2026-09-15";
+      localStorage.setItem('melbourne_master_guide_v3_2', JSON.stringify(CURRENT_PROJECT));
+    }
+
+    // 마우스 드래그 앤 드롭 및 시각적 반응이 적용된 네비게이터 렌더링
+    function renderNavigator() {
+      const cont = document.getElementById('navigator-list');
+      cont.innerHTML = '';
+      const filter = document.getElementById('poi-search').value.toLowerCase();
+      const groupFilter = document.getElementById('navigator-group-filter').value;
+
+      CURRENT_PROJECT.pois.forEach((poi, idx) => {
+        if (groupFilter !== 'ALL' && poi.groupId !== groupFilter) return;
+        if (filter && !poi.nameKo.toLowerCase().includes(filter) && !poi.nameEn.toLowerCase().includes(filter)) return;
+
+        const card = document.createElement('div');
+        card.className = `poi-card ${poi.id === selectedPoiId ? 'active' : ''}`;
+        card.setAttribute('draggable', 'true');
+        card.dataset.index = idx;
+
+        // 드래그 앤 드롭 이벤트 등록
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragover', handleDragOver);
+        card.addEventListener('dragleave', handleDragLeave);
+        card.addEventListener('drop', handleDrop);
+        card.addEventListener('dragend', handleDragEnd);
+
+        card.onclick = () => selectPOI(poi.id, true);
+
+        const thumb = poi.thumbUrl ? `<div class="poi-thumb"><img src="${escapeHtml(poi.thumbUrl)}" alt="thumb"></div>` : `<div class="poi-thumb">📍</div>`;
+        const audioBadge = ((poi.audio?.ko?.fileUrl && poi.audio.ko.fileUrl.trim()) || (poi.audio?.en?.fileUrl && poi.audio.en.fileUrl.trim())) ? ` 🎵` : '';
+        const groupObj = CURRENT_PROJECT.groups.find(g => g.id === poi.groupId);
+        const groupLabel = groupObj ? groupObj.name.split(' ')[0] : '미지정';
+        const tierClass = poi.tier === 1 ? 'badge-t1' : (poi.tier === 2 ? 'badge-t2' : 'badge-t3');
+
+        card.innerHTML = `
+          <div class="drag-handle" title="마우스로 끌어서 순서 변경">⠿</div>
+          ${thumb}
+          <div class="poi-meta">
+            <div class="poi-title"><span class="badge-tier ${tierClass}">T${poi.tier||2}</span><span>${idx+1}. ${escapeHtml(poi.nameKo)}</span>${audioBadge}</div>
+            <div class="poi-sub"><span class="badge-group">${escapeHtml(groupLabel)}</span> ${escapeHtml(poi.category)} · ${poi.stayMin}분</div>
+          </div>
+        `;
+        cont.appendChild(card);
+      });
+    }
+
+    // 드래그 앤 드롭 핸들러 로직
+    function handleDragStart(e) {
+      draggedPoiIndex = Number(this.dataset.index);
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', draggedPoiIndex);
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const targetCard = this;
+      if (Number(targetCard.dataset.index) !== draggedPoiIndex) {
+        targetCard.classList.add('drag-over');
+      }
+    }
+
+    function handleDragLeave() {
+      this.classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      const targetIndex = Number(this.dataset.index);
+
+      if (draggedPoiIndex !== null && draggedPoiIndex !== targetIndex) {
+        // 배열 원소 재배치
+        const movedItem = CURRENT_PROJECT.pois.splice(draggedPoiIndex, 1)[0];
+        CURRENT_PROJECT.pois.splice(targetIndex, 0, movedItem);
+
+        persist();
+        renderNavigator();
+        renderMapPins();
+      }
+    }
+
+    function handleDragEnd() {
+      this.classList.remove('dragging');
+      document.querySelectorAll('.poi-card').forEach(c => c.classList.remove('drag-over'));
+      draggedPoiIndex = null;
+    }
+
+    function filterPOIList() { renderNavigator(); }
+
+    function selectPOI(id, shouldScroll = false) {
+      window.speechSynthesis.cancel();
+      selectedPoiId = id;
+      const poi = CURRENT_PROJECT.pois.find(p => p.id === id);
+      if (!poi) return;
+
+      document.getElementById('field-id').value = poi.id;
+      document.getElementById('field-name-ko').value = poi.nameKo || '';
+      document.getElementById('field-name-en').value = poi.nameEn || '';
+      document.getElementById('field-address').value = poi.address || '';
+      document.getElementById('geocode-status').innerHTML = poi.address ? `현재 주소: <b>${escapeHtml(poi.address)}</b>` : '등록된 주소 없음';
+
+      document.getElementById('field-group-id').value = poi.groupId || CURRENT_PROJECT.groups[0].id;
+      document.getElementById('field-travel-mode').value = poi.travelMode || 'walking';
+      document.getElementById('field-tier').value = poi.tier || 2;
+      document.getElementById('field-category').value = poi.category || '랜드마크';
+      document.getElementById('field-stay').value = poi.stayMin || 15;
+      document.getElementById('field-lat').value = poi.lat;
+      document.getElementById('field-lng').value = poi.lng;
+
+      const arrival = poi.gps?.arrivalRadius || 25;
+      const exit = poi.gps?.exitRadius || 40;
+      document.getElementById('field-gps-arrival').value = arrival;
+      document.getElementById('lbl-gps-arrival').innerText = arrival;
+      document.getElementById('field-gps-exit').value = exit;
+      document.getElementById('lbl-gps-exit').innerText = exit;
+      document.getElementById('field-gps-autoplay').checked = poi.gps?.autoPlay !== false;
+      document.getElementById('field-gps-pause-stop').checked = poi.gps?.pauseIfStopped !== false;
+
+      document.getElementById('field-heritage-year').value = (poi.heritage?.builtYear !== undefined && poi.heritage?.builtYear !== 0) ? poi.heritage.builtYear : '';
+      document.getElementById('field-heritage-architect').value = poi.heritage?.architect || '';
+      document.getElementById('field-heritage-style').value = poi.heritage?.architecture || '';
+      document.getElementById('field-heritage-level').value = poi.heritage?.heritageLevel || '';
+      document.getElementById('field-heritage-period').value = poi.heritage?.historicalPeriod || '';
+      document.getElementById('field-heritage-goldrush').checked = Boolean(poi.heritage?.goldRushRelated);
+      document.getElementById('field-heritage-verified').checked = Boolean(poi.heritage?.verified);
+      document.getElementById('field-heritage-aboriginal').value = poi.heritage?.aboriginalStory || '';
+      document.getElementById('field-heritage-sources').value = poi.heritage?.sources ? poi.heritage.sources.join(', ') : '';
+
+      const currentTags = poi.tags || [];
+      document.querySelectorAll('.poi-tag-chk').forEach(chk => {
+        chk.checked = currentTags.includes(chk.value);
+      });
+
+      document.getElementById('field-guide-tip').value = poi.guideNotes?.spotTip || '';
+      document.getElementById('field-guide-faq').value = poi.guideNotes?.faq ? poi.guideNotes.faq.join(' / ') : '';
+      document.getElementById('field-guide-warning').value = poi.guideNotes?.warning || '';
+
+      document.getElementById('field-story-ko-intro').value = poi.stories?.ko?.intro || '';
+      document.getElementById('field-story-ko-main').value = poi.stories?.ko?.main || '';
+      document.getElementById('field-story-ko-hidden').value = poi.stories?.ko?.hidden || '';
+      document.getElementById('field-story-ko-photo').value = poi.stories?.ko?.photoSpot || '';
+      document.getElementById('field-story-ko-trivia').value = poi.stories?.ko?.trivia || '';
+
+      document.getElementById('field-story-en-intro').value = poi.stories?.en?.intro || '';
+      document.getElementById('field-story-en-main').value = poi.stories?.en?.main || '';
+      document.getElementById('field-story-en-hidden').value = poi.stories?.en?.hidden || '';
+      document.getElementById('field-story-en-photo').value = poi.stories?.en?.photoSpot || '';
+      document.getElementById('field-story-en-trivia').value = poi.stories?.en?.trivia || '';
+
+      const koUrl = poi.audio?.ko?.fileUrl || '';
+      const enUrl = poi.audio?.en?.fileUrl || '';
+      document.getElementById('field-audio-ko-url').value = koUrl;
+      document.getElementById('field-audio-en-url').value = enUrl;
+      document.getElementById('audio-player-ko').src = koUrl;
+      document.getElementById('audio-player-en').src = enUrl;
+      document.getElementById('audio-ko-dur-tag').innerText = `${poi.audio?.ko?.durationSec || 0}초`;
+      document.getElementById('audio-en-dur-tag').innerText = `${poi.audio?.en?.durationSec || 0}초`;
+
+      document.getElementById('studio-tts-text').value = poi.stories?.ko?.main || '';
+
+      document.getElementById('field-thumb-url').value = poi.thumbUrl || '';
+      renderImagePreview(poi.thumbUrl || '');
+
+      document.getElementById('field-wayfinding-hint').value = poi.wayfinding?.hint || '';
+      document.getElementById('field-clue-url').value = poi.wayfinding?.clueUrl || '';
+      document.getElementById('field-opening-hours').value = poi.openingHours || '';
+
+      document.getElementById('field-has-toilet').checked = Boolean(poi.facilities?.toilet);
+      document.getElementById('field-has-wheelchair').checked = Boolean(poi.facilities?.wheelchair);
+      document.getElementById('field-has-stroller').checked = Boolean(poi.facilities?.stroller);
+      document.getElementById('field-has-water').checked = Boolean(poi.facilities?.water);
+      document.getElementById('field-has-seating').checked = Boolean(poi.facilities?.seating);
+      document.getElementById('field-has-stairs').checked = Boolean(poi.facilities?.stairs);
+      document.getElementById('field-has-parking').checked = poi.facilities?.parking !== false;
+
+      document.getElementById('field-is-passthrough').checked = Boolean(poi.isPassThrough);
+      tempGates = poi.gates ? JSON.parse(JSON.stringify(poi.gates)) : [];
+      togglePassThroughMode();
+
+      document.getElementById('editor-title').innerText = `명소 편집 (${poi.nameKo})`;
+      document.getElementById('editor-status-badge').style.display = poi.nameKo === "새 오디오 스팟" ? "inline-block" : "none";
+
+      if (previewMarker) { map.removeLayer(previewMarker); previewMarker = null; }
+      renderNavigator(); renderMapPins(); updateGeofenceCircles();
+      map.panTo([poi.lat, poi.lng]);
+    }
+
+    function updateGeofenceCircles() {
+      geofenceLayer.clearLayers();
+      const lat = parseFloat(document.getElementById('field-lat').value);
+      const lng = parseFloat(document.getElementById('field-lng').value);
+      if (isNaN(lat) || isNaN(lng)) return;
+
+      const arrRad = parseInt(document.getElementById('field-gps-arrival').value) || 25;
+      const exitRad = parseInt(document.getElementById('field-gps-exit').value) || 40;
+
+      L.circle([lat, lng], { radius: exitRad, color: '#ef4444', weight: 1.5, dashArray: '4, 4', fillColor: '#ef4444', fillOpacity: 0.08 }).addTo(geofenceLayer);
+      L.circle([lat, lng], { radius: arrRad, color: '#f59e0b', weight: 2, fillColor: '#f59e0b', fillOpacity: 0.18 }).addTo(geofenceLayer);
+    }
+
+    function updatePreviewMarker() {
+      const lat = parseFloat(document.getElementById('field-lat').value);
+      const lng = parseFloat(document.getElementById('field-lng').value);
+      if (isNaN(lat) || isNaN(lng)) return;
+      if (!previewMarker) {
+        previewMarker = L.marker([lat, lng], { icon: L.divIcon({ className: 'poi-pin', html: '📍', iconSize: [26, 26], iconAnchor: [13, 13] }) }).addTo(map);
+      } else { previewMarker.setLatLng([lat, lng]); }
+      updateGeofenceCircles();
+    }
+
+    function handleImageFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('field-thumb-url').value = e.target.result;
+        renderImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderImagePreview(src) {
+      const box = document.getElementById('thumb-preview-box');
+      if (src && src.trim()) {
+        box.innerHTML = `<img src="${src}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='로드 실패'">`;
+      } else { box.innerHTML = `<span style="font-size:11px; color:#94a3b8;">미리보기 없음</span>`; }
+    }
+
+    function togglePassThroughMode() {
+      const isPass = document.getElementById('field-is-passthrough').checked;
+      document.getElementById('gate-section').style.display = isPass ? 'block' : 'none';
+      renderGatesUI();
+    }
+
+    function renderGatesUI() {
+      const wrap = document.getElementById('gate-items-wrap');
+      wrap.innerHTML = '';
+      gatesLayer.clearLayers();
+
+      tempGates.forEach((g, idx) => {
+        const safeName = escapeHtml(g.name);
+        wrap.innerHTML += `
+          <div class="gate-row">
+            <b style="color:#a855f7;">G${idx+1}</b>
+            <input type="text" value="${safeName}" onchange="tempGates[${idx}].name=this.value" style="flex:1; padding:3px 6px;">
+            <button type="button" onclick="tempGates.splice(${idx},1); renderGatesUI();" style="background:#ef4444; border:none; color:white; border-radius:3px; padding:2px 6px; cursor:pointer;">✕</button>
+          </div>
+        `;
+        const marker = L.marker([g.lat, g.lng], {
+          icon: L.divIcon({ className: 'gate-pin', html: `G${idx+1}`, iconSize: [22, 22], iconAnchor: [11, 11] })
+        }).addTo(gatesLayer);
+        marker.bindPopup(`<b>${safeName}</b><br><button onclick="tempGates.splice(${idx},1); renderGatesUI();" style="background:#ef4444; color:white; border:none; padding:2px 6px; border-radius:3px; cursor:pointer; margin-top:4px;">게이트 삭제</button>`);
+      });
+    }
+
+    function evaluateQA() {
+      const poi = CURRENT_PROJECT.pois.find(p => p.id === selectedPoiId);
+      if (!poi) return;
+      const checks = [
+        { label: "대표 사진 등록", pass: Boolean(poi.thumbUrl) },
+        { label: "한국어 오디오 URL", pass: Boolean(poi.audio?.ko?.fileUrl) },
+        { label: "영어 오디오 URL", pass: Boolean(poi.audio?.en?.fileUrl) },
+        { label: "권역 그룹(Region) 지정", pass: Boolean(poi.groupId) },
+        { label: "도로명 주소 등록", pass: Boolean(poi.address) },
+        { label: "공인 검증 완료 (Verified)", pass: Boolean(poi.heritage?.verified) },
+        { label: "한국어 대본 작성", pass: Boolean(poi.stories?.ko?.main) },
+        { label: "가이드 비공개 노트 팁", pass: Boolean(poi.guideNotes?.spotTip) }
+      ];
+      const score = Math.round((checks.filter(c => c.pass).length / checks.length) * 100);
+      document.getElementById('qa-score-badge').innerText = `Score: ${score} / 100`;
+      const wrap = document.getElementById('qa-checklist-wrap');
+      wrap.innerHTML = '';
+      checks.forEach(c => {
+        wrap.innerHTML += `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #1e293b;"><span>${c.label}</span><span style="font-weight:bold; color:${c.pass?'#10b981':'#ef4444'}">${c.pass?'✓':'✗'}</span></div>`;
+      });
+    }
+
+    function saveCurrentSpot() {
+      const id = document.getElementById('field-id').value;
+      const pIdx = CURRENT_PROJECT.pois.findIndex(p => p.id === id);
+      if (pIdx === -1) return;
+
+      const sources = document.getElementById('field-heritage-sources').value.split(',').map(s => s.trim()).filter(Boolean);
+      const faq = document.getElementById('field-guide-faq').value.split('/').map(s => s.trim()).filter(Boolean);
+      const isPass = document.getElementById('field-is-passthrough').checked;
+
+      const selectedTags = [];
+      document.querySelectorAll('.poi-tag-chk:checked').forEach(chk => {
+        selectedTags.push(chk.value);
+      });
+
+      CURRENT_PROJECT.pois[pIdx] = {
+        id,
+        groupId: document.getElementById('field-group-id').value,
+        travelMode: document.getElementById('field-travel-mode').value,
+        nameKo: document.getElementById('field-name-ko').value.trim() || '이름 없음',
+        nameEn: document.getElementById('field-name-en').value.trim() || 'Untitled',
+        address: document.getElementById('field-address').value.trim(),
+        tier: parseInt(document.getElementById('field-tier').value) || 2,
+        category: document.getElementById('field-category').value,
+        stayMin: parseInt(document.getElementById('field-stay').value) || 0,
+        lat: parseFloat(document.getElementById('field-lat').value) || -37.814,
+        lng: parseFloat(document.getElementById('field-lng').value) || 144.966,
+        thumbUrl: document.getElementById('field-thumb-url').value.trim(),
+        audio: {
+          ko: { fileUrl: document.getElementById('field-audio-ko-url').value.trim(), durationSec: parseInt(document.getElementById('audio-ko-dur-tag').innerText) || 0 },
+          en: { fileUrl: document.getElementById('field-audio-en-url').value.trim(), durationSec: parseInt(document.getElementById('audio-en-dur-tag').innerText) || 0 }
+        },
+        gps: {
+          arrivalRadius: parseInt(document.getElementById('field-gps-arrival').value) || 25,
+          exitRadius: parseInt(document.getElementById('field-gps-exit').value) || 40,
+          autoPlay: document.getElementById('field-gps-autoplay').checked,
+          pauseIfStopped: document.getElementById('field-gps-pause-stop').checked
+        },
+        heritage: {
+          builtYear: document.getElementById('field-heritage-year').value.trim(),
+          architect: document.getElementById('field-heritage-architect').value.trim(),
+          architecture: document.getElementById('field-heritage-style').value.trim(),
+          heritageLevel: document.getElementById('field-heritage-level').value.trim(),
+          historicalPeriod: document.getElementById('field-heritage-period').value.trim(),
+          goldRushRelated: document.getElementById('field-heritage-goldrush').checked,
+          verified: document.getElementById('field-heritage-verified').checked,
+          aboriginalStory: document.getElementById('field-heritage-aboriginal').value.trim(),
+          sources, keywords: []
+        },
+        tags: selectedTags,
+        stories: {
+          ko: {
+            intro: document.getElementById('field-story-ko-intro').value.trim(),
+            main: document.getElementById('field-story-ko-main').value.trim(),
+            hidden: document.getElementById('field-story-ko-hidden').value.trim(),
+            photoSpot: document.getElementById('field-story-ko-photo').value.trim(),
+            trivia: document.getElementById('field-story-ko-trivia').value.trim()
+          },
+          en: {
+            intro: document.getElementById('field-story-en-intro').value.trim(),
+            main: document.getElementById('field-story-en-main').value.trim(),
+            hidden: document.getElementById('field-story-en-hidden').value.trim(),
+            photoSpot: document.getElementById('field-story-en-photo').value.trim(),
+            trivia: document.getElementById('field-story-en-trivia').value.trim()
+          }
+        },
+        guideNotes: {
+          spotTip: document.getElementById('field-guide-tip').value.trim(),
+          faq,
+          warning: document.getElementById('field-guide-warning').value.trim()
+        },
+        wayfinding: { hint: document.getElementById('field-wayfinding-hint').value.trim(), clueUrl: document.getElementById('field-clue-url').value.trim() },
+        openingHours: document.getElementById('field-opening-hours').value.trim(),
+        facilities: {
+          toilet: document.getElementById('field-has-toilet').checked,
+          wheelchair: document.getElementById('field-has-wheelchair').checked,
+          stroller: document.getElementById('field-has-stroller').checked,
+          water: document.getElementById('field-has-water').checked,
+          seating: document.getElementById('field-has-seating').checked,
+          stairs: document.getElementById('field-has-stairs').checked,
+          parking: document.getElementById('field-has-parking').checked
+        },
+        isPassThrough: isPass,
+        gates: isPass ? [...tempGates] : []
+      };
+
+      if (previewMarker) { map.removeLayer(previewMarker); previewMarker = null; }
+      persist();
+      renderNavigator();
+      renderMapPins();
+      updateGeofenceCircles();
+      alert("Melbourne Master Guide v3.2 저장 완료!");
+    }
+
+    function deleteCurrentSpot() {
+      if (!confirm("정말 삭제하시겠습니까?")) return;
+      CURRENT_PROJECT.pois = CURRENT_PROJECT.pois.filter(p => p.id !== selectedPoiId);
+      if (CURRENT_PROJECT.pois.length > 0) selectedPoiId = CURRENT_PROJECT.pois[0].id;
+      persist();
+      renderNavigator();
+      renderMapPins();
+      if (CURRENT_PROJECT.pois.length > 0) selectPOI(selectedPoiId, true);
+    }
+
+    function renderMapPins() {
+      markersLayer.clearLayers();
+      const groupFilter = document.getElementById('navigator-group-filter').value;
+      CURRENT_PROJECT.pois.forEach((poi, idx) => {
+        if (groupFilter !== 'ALL' && poi.groupId !== groupFilter) return;
+        const isSelected = poi.id === selectedPoiId;
+        const icon = L.divIcon({ className: `poi-pin tier-${poi.tier||2} ${isSelected?'selected':''}`, html: `${idx+1}`, iconSize: [26, 26], iconAnchor: [13, 13] });
+        const marker = L.marker([poi.lat, poi.lng], { icon }).addTo(markersLayer);
+        marker.on('click', () => selectPOI(poi.id, true));
+        marker.bindPopup(`<b>${idx+1}. ${escapeHtml(poi.nameKo)}</b>`);
+      });
+    }
+
+    function exportMasterJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(CURRENT_PROJECT, null, 2));
+      const a = document.createElement('a'); a.href = dataStr; a.download = `master_guide_v3.2_${Date.now()}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+
+    function importMasterJSON(event) {
+      const file = event.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.pois) {
+            CURRENT_PROJECT = imported;
+            populateGroupSelects();
+            persist();
+            if (CURRENT_PROJECT.pois.length > 0) {
+              selectPOI(CURRENT_PROJECT.pois[0].id, true);
+            }
+            alert("불러오기 성공!");
+          }
+        } catch (err) { alert("오류: " + err.message); }
+      };
+      reader.readAsText(file);
+    }
+
+    populateGroupSelects();
+    renderNavigator();
+    if (selectedPoiId) {
+      selectPOI(selectedPoiId, false);
+    }
+  </script>
+</body>
+</html>
