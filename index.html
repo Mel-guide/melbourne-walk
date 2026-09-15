@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>user_v1.0_20260915.html - Melbourne Walk V1</title>
+  <title>Melbourne Walk V1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <style>
     :root {
@@ -39,7 +39,6 @@
     h2 { font-size: 18px; color: var(--text-main); margin-bottom: 4px; }
     p.sub-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
 
-    /* 동기화 바 */
     .sync-bar {
       display: flex; justify-content: space-between; align-items: center;
       background: #1e293b; border: 1px solid #334155; padding: 8px 12px; border-radius: 6px; font-size: 11px;
@@ -91,34 +90,34 @@
   <header>
     <div class="brand">
       <span>🚶 Melbourne Walk</span>
-      <span class="badge-filename">user_v1.0_20260915.html</span>
+      <span class="badge-filename">v1.1 (Auto Audio Unlock)</span>
     </div>
     <div id="header-status" style="font-size: 11px; color: var(--success);">● GPS 대기 중</div>
   </header>
 
   <div class="app-container">
 
-    <!-- [SCREEN 1] 관심 장소 선택 -->
+    <!-- SCREEN 1 -->
     <div id="screen-select" class="screen active">
       <div class="sync-bar">
-        <span id="sync-status-text">⚡ Admin 데이터 자동 동기화됨</span>
+        <span id="sync-status-text">⚡ Admin 데이터 동기화</span>
         <button class="btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="document.getElementById('sync-file-input').click()">📂 JSON 직접 열기</button>
         <input type="file" id="sync-file-input" accept=".json" style="display:none;" onchange="handleManualSync(event)">
       </div>
 
       <div>
         <h2>산책 및 투어 코스 선택</h2>
-        <p class="sub-desc">어드민에서 정렬 및 편집하신 POI 목록입니다. 방문할 장소를 확인해 보세요.</p>
+        <p class="sub-desc">어드민에서 정렬 및 편집하신 POI 목록입니다.</p>
       </div>
       <div id="poi-checkbox-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
       <button class="btn-primary" onclick="goToSortScreen()">내 투어 동선 만들기 ➔</button>
     </div>
 
-    <!-- [SCREEN 2] 순서 정렬 및 요약 -->
+    <!-- SCREEN 2 -->
     <div id="screen-sort" class="screen">
       <div>
         <h2>방문 순서 확인 및 조정</h2>
-        <p class="sub-desc">필요한 경우 화살표(▲▼)를 눌러 최종 순서를 변경하세요.</p>
+        <p class="sub-desc">화살표(▲▼)를 눌러 최종 순서를 변경하세요.</p>
       </div>
       <div id="sort-list-box" style="display: flex; flex-direction: column; gap: 6px;"></div>
       
@@ -134,7 +133,7 @@
       </div>
     </div>
 
-    <!-- [SCREEN 3] 액티브 플레이어 대시보드 -->
+    <!-- SCREEN 3 -->
     <div id="screen-player" class="screen">
       <div class="player-card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -145,16 +144,15 @@
         <div>
           <h2 id="active-spot-name" style="color: var(--accent); font-size: 20px;">장소명 로딩 중</h2>
           <div class="distance-alert" id="lbl-distance-status">
-            <span>📍 현장 반경 대기 중... (진입 시 오디오 자동 재생)</span>
+            <span>📍 현장 반경 대기 중...</span>
           </div>
         </div>
 
-        <!-- 오디오 플레이어 -->
         <div class="audio-player-box">
           <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
             <span id="lbl-audio-title">가이드 해설 대기 중</span>
           </div>
-          <audio id="main-audio-player" controls></audio>
+          <audio id="main-audio-player" controls preload="auto"></audio>
         </div>
 
         <div style="display: flex; gap: 6px;">
@@ -165,7 +163,7 @@
 
       <div class="section-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
         <span style="font-size: 11px; font-weight: bold; color: var(--accent);">📖 현장 가이드 해설 요약</span>
-        <p id="active-spot-story" style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">현장에 도착하면 가이드의 생생한 해설이 자동으로 재생됩니다.</p>
+        <p id="active-spot-story" style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">현장에 도착하면 가이드의 생생한 해설이 재생됩니다.</p>
       </div>
 
       <div class="nav-list-mini" id="mini-progress-list"></div>
@@ -176,62 +174,36 @@
   </div>
 
   <script>
-    // 기본 백업 시드 데이터 (Scoresby 동네 5개소)[cite: 1]
+    const SAMPLE_AUDIO = "https://actions.google.com/sounds/v1/ambiences/morning_birds.ogg";
+
     const FALLBACK_POIS = [
       {
-        id: "poi_1789445609737",
-        nameKo: "집",
-        nameEn: "home",
-        address: "93 Grayson Drive Scoresby",
-        lat: -37.890197,
-        lng: 145.239129,
-        arrivalRadius: 30,
-        audioUrl: "https://actions.google.com/sounds/v1/ambiences/morning_birds.ogg",
-        story: "출발지와 휴식이 시작되는 아늑한 우리 집입니다."
+        id: "poi_1789445609737", nameKo: "집", nameEn: "home", address: "93 Grayson Drive Scoresby",
+        lat: -37.890197, lng: 145.239129, arrivalRadius: 30,
+        audioUrl: SAMPLE_AUDIO, story: "출발지와 휴식이 시작되는 아늑한 우리 집입니다."
       },
       {
-        id: "poi_1789445482939",
-        nameKo: "버닝스",
-        nameEn: "Bunnings",
-        address: "1467 ferntree gully rd scoresby 3179",
-        lat: -37.897191,
-        lng: 145.241833,
-        arrivalRadius: 110,
+        id: "poi_1789444844474", nameKo: "스코스비 중학교", nameEn: "Scoresby S.C", address: "91 grayson dr scoresby vic",
+        lat: -37.889317, lng: 145.236018, arrivalRadius: 55,
         audioUrl: "https://actions.google.com/sounds/v1/ambiences/city_traffic.ogg",
-        story: "다양한 철물 자재와 DIY 용품, 그리고 주말 소시지 시즐로 유명한 버닝스 스코스비 지점입니다."
+        story: "지역 청소년들의 배움과 꿈이 자라나는 스코스비 세컨더리 커리지입니다."
       },
       {
-        id: "poi_1789445343127",
-        nameKo: "Rosehii_FG Road",
-        nameEn: "New Audio Spot",
-        address: "3 rosehill st Scoresby",
-        lat: -37.898224,
-        lng: 145.236640,
-        arrivalRadius: 25,
-        audioUrl: "https://actions.google.com/sounds/v1/ambiences/morning_birds.ogg",
-        story: "로즈힐 스트리트와 퍼이트리굴리 로드가 만나는 인근 지역 스팟입니다."
-      },
-      {
-        id: "poi_1789445090336",
-        nameKo: "베테딕드 공원",
-        nameEn: "Benedict Reserve",
-        address: "44 Rosehill St. Scoresby Vic",
-        lat: -37.892958,
-        lng: 145.236425,
-        arrivalRadius: 100,
+        id: "poi_1789445090336", nameKo: "베테딕드 공원", nameEn: "Benedict Reserve", address: "44 Rosehill St. Scoresby Vic",
+        lat: -37.892958, lng: 145.236425, arrivalRadius: 100,
         audioUrl: "https://actions.google.com/sounds/v1/ambiences/rain_heavy.ogg",
         story: "주민들의 산책과 휴식을 책임지는 푸른 잔디와 나무가 어우러진 베네딕트 리저브 공원입니다."
       },
       {
-        id: "poi_1789444844474",
-        nameKo: "스코스비 중학교",
-        nameEn: "Scoresby S.C",
-        address: "91 grayson dr scoresby vic",
-        lat: -37.889317,
-        lng: 145.236018,
-        arrivalRadius: 55,
-        audioUrl: "https://actions.google.com/sounds/v1/ambiences/city_traffic.ogg",
-        story: "지역 청소년들의 배움과 꿈이 자라나는 스코스비 세컨더리 커리지(Scoresby Secondary College)입니다."
+        id: "poi_1789445343127", nameKo: "Rosehii_FG Road", nameEn: "New Audio Spot", address: "3 rosehill st Scoresby",
+        lat: -37.898224, lng: 145.236640, arrivalRadius: 25,
+        audioUrl: SAMPLE_AUDIO, story: "로즈힐 스트리트와 퍼이트리굴리 로드가 만나는 인근 지역 스팟입니다."
+      },
+      {
+        id: "poi_1789445482939", nameKo: "버닝스", nameEn: "Bunnings", address: "1467 ferntree gully rd scoresby 3179",
+        lat: -37.897191, lng: 145.241833, arrivalRadius: 110,
+        audioUrl: "https://actions.google.com/sounds/v1/ambiences/morning_birds.ogg",
+        story: "다양한 철물 자재와 DIY 용품, 그리고 주말 소시지 시즐로 유명한 버닝스 스코스비 지점입니다."
       }
     ];
 
@@ -241,12 +213,10 @@
     let watchId = null;
     let hasPlayedArrivalAudio = false;
 
-    // 데이터 로드 및 동기화 루틴
     function loadSynchronizedData() {
       try {
         const savedProject = JSON.parse(localStorage.getItem('melbourne_master_guide_v3_2'));
         if (savedProject && savedProject.pois && savedProject.pois.length > 0) {
-          // myvillage 그룹이 있으면 우선 로드, 없으면 상위 5개 추출[cite: 1]
           const villagePois = savedProject.pois.filter(p => p.groupId === 'myvillage');
           const sourceList = villagePois.length > 0 ? villagePois : savedProject.pois.slice(0, 5);
           
@@ -258,21 +228,20 @@
             lat: p.lat,
             lng: p.lng,
             arrivalRadius: p.gps?.arrivalRadius || 25,
-            audioUrl: p.audio?.ko?.fileUrl || "https://actions.google.com/sounds/v1/ambiences/morning_birds.ogg",
+            audioUrl: (p.audio?.ko?.fileUrl && p.audio.ko.fileUrl.trim()) ? p.audio.ko.fileUrl.trim() : SAMPLE_AUDIO,
             story: p.stories?.ko?.main || p.stories?.ko?.intro || "현장 도착 시 가이드 해설이 제공됩니다."
           }));
           document.getElementById('sync-status-text').innerText = `⚡ Admin 연동됨 (${ACTIVE_POIS.length}개 로드)`;
           return;
         }
       } catch (e) {
-        console.warn("로컬스토리지 연동 실패, 기본 시드로 전환합니다:", e);
+        console.warn("로컬스토리지 연동 실패:", e);
       }
 
       ACTIVE_POIS = [...FALLBACK_POIS];
       document.getElementById('sync-status-text').innerText = `📦 기본 데이터 (${ACTIVE_POIS.length}개 로드)`;
     }
 
-    // 파일 수동 동기화 핸들러
     function handleManualSync(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -286,9 +255,7 @@
             initApp();
             alert(`동기화 성공! 총 ${ACTIVE_POIS.length}개 POI가 로드되었습니다.`);
           }
-        } catch (err) {
-          alert("파일 동기화 오류: " + err.message);
-        }
+        } catch (err) { alert("파일 동기화 오류: " + err.message); }
       };
       reader.readAsText(file);
     }
@@ -366,9 +333,27 @@
       renderSortList();
     }
 
+    // 클릭 제스처 시점에 오디오 잠금을 완전히 해제(Unlock)
     function startActiveTour() {
       currentTourIndex = 0;
       hasPlayedArrivalAudio = false;
+
+      const player = document.getElementById('main-audio-player');
+      const firstPoi = userSelectedSpots[0];
+      player.src = firstPoi.audioUrl;
+      
+      // 사용자 클릭 순간 바로 play() -> 브라우저의 오디오 잠금 해제
+      const promise = player.play();
+      if (promise !== undefined) {
+        promise.then(() => {
+          // 도착 전이므로 일단 일시정지
+          player.pause();
+          player.currentTime = 0;
+        }).catch(err => {
+          console.warn("오디오 초기 해제 대기:", err);
+        });
+      }
+
       switchScreen('screen-player');
       updateActivePlayerUI();
       startGPSWatch();
@@ -404,10 +389,7 @@
     }
 
     function startGPSWatch() {
-      if (!navigator.geolocation) {
-        alert("이 브라우저는 GPS 위치 기능을 지원하지 않습니다.");
-        return;
-      }
+      if (!navigator.geolocation) return;
 
       document.getElementById('header-status').innerText = "● GPS 활성화됨";
       watchId = navigator.geolocation.watchPosition(
@@ -415,13 +397,11 @@
           const userLat = position.coords.latitude;
           const userLng = position.coords.longitude;
           document.getElementById('lbl-gps-coord').innerText = `${userLat.toFixed(4)}, ${userLng.toFixed(4)}`;
-
           checkGeofence(userLat, userLng);
         },
         (error) => {
-          console.error(error);
+          console.warn("GPS 수신 실패:", error);
           document.getElementById('header-status').innerText = "⚠️ GPS 수신 오류";
-          document.getElementById('lbl-distance-status').innerHTML = `<span style="color:var(--danger);">⚠️ GPS 신호를 잡지 못했습니다. 수동 재생 버튼을 이용하세요.</span>`;
         },
         { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
       );
@@ -434,11 +414,8 @@
       const Δφ = (lat2-lat1) * Math.PI/180;
       const Δλ = (lon2-lon1) * Math.PI/180;
 
-      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                Math.cos(φ1) * Math.cos(φ2) *
-                Math.sin(Δλ/2) * Math.sin(Δλ/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c;
+      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
     }
 
     function checkGeofence(uLat, uLng) {
@@ -449,7 +426,6 @@
       const statusBox = document.getElementById('lbl-distance-status');
       if (roundedDist <= poi.arrivalRadius) {
         statusBox.innerHTML = `<span style="color:var(--success);">🎉 도착 완료! (거리: ${roundedDist}m) - 오디오 재생 중</span>`;
-        
         if (!hasPlayedArrivalAudio) {
           hasPlayedArrivalAudio = true;
           forcePlayCurrentAudio();
@@ -459,12 +435,16 @@
       }
     }
 
+    // 경고 팝업(alert)을 완전히 제거하고 조용히 재생 처리
     function forcePlayCurrentAudio() {
       const player = document.getElementById('main-audio-player');
-      player.play().catch(err => {
-        console.warn("오디오 자동 재생 제한됨:", err);
-        alert("브라우저 보안 정책으로 인해 오디오를 즉시 재생할 수 없습니다. [▶ 수동 재생] 버튼을 눌러주세요.");
-      });
+      const promise = player.play();
+      if (promise !== undefined) {
+        promise.catch(err => {
+          console.warn("자동 재생 대기:", err);
+          document.getElementById('lbl-distance-status').innerHTML = `<span style="color:var(--warning);">[▶ 수동 재생] 버튼을 눌러 청취를 시작하세요.</span>`;
+        });
+      }
     }
 
     function openExternalGoogleMap() {
@@ -480,7 +460,6 @@
       switchScreen('screen-select');
     }
 
-    // 앱 시작: 데이터 동기화 후 초기화
     loadSynchronizedData();
     initApp();
   </script>
