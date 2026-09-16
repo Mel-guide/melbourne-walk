@@ -363,14 +363,7 @@
           <div class="panel-header">
             <span>2. 도로선 긋기 에디터</span>
           </div>
-
-          <!-- ★ 저장된 GeoJSON 파일 직접 불러오기 도구 탑재 -->
-          <div style="background:#fefce8; border:1px solid #fde047; padding:8px 10px; border-radius:6px; margin-bottom:8px;">
-            <div style="font-size:11px; font-weight:bold; color:#854d0e; margin-bottom:4px;">📂 저장해 둔 GeoJSON 파일 불러오기</div>
-            <input type="file" id="inpLoadGeoJSONFile" accept=".geojson,application/geo+json,application/json" style="font-size:11px; width:100%;">
-          </div>
-
-          <div style="background:#f1f5f9; padding:8px 10px; border-radius:6px; font-size:11px; margin-bottom:8px; line-height:1.5;">
+          <div style="background:#f1f5f9; padding:8px 10px; border-radius:6px; font-size:11px; margin-bottom:10px; line-height:1.5;">
             <div>🔵 <strong>파란색 핀</strong>: 현재 구간의 출발 스팟</div>
             <div>🔴 <strong>빨간색 핀</strong>: 현재 구간의 도착 스팟</div>
             <div>🚩 <strong>노란색 핀</strong>: 직전 구간의 마지막 끝점 (클릭 시 자동 연결)</div>
@@ -481,24 +474,13 @@
       }
     }
 
-    // 완성된 전체 좌표를 index.html이 바로 읽을 수 있도록 함께 보존
+    // ★ 경로선 좌표까지 함께 localStorage에 저장
     function saveToLocalStorage() {
-      const compiledRoutes = {};
-      Object.keys(tourSegmentsStorage).forEach(tid => {
-        const segs = tourSegmentsStorage[tid] || {};
-        let coords = [];
-        Object.keys(segs).sort((a,b) => Number(a)-Number(b)).forEach(k => {
-          segs[k].forEach(n => coords.push([n.lat, n.lng]));
-        });
-        if (coords.length >= 2) compiledRoutes[tid] = coords;
-      });
-
       const payload = {
         updated_at: new Date().toISOString(),
         masterPOIs: masterPOIs,
         masterTours: masterTours,
-        tourSegmentsStorage: tourSegmentsStorage,
-        compiledRoutes: compiledRoutes // index.html용 즉시 렌더링 좌표
+        tourSegmentsStorage: tourSegmentsStorage // 보행선 완벽 저장
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     }
@@ -508,7 +490,6 @@
     let selectedPoiId = "poi_flinders_station";
     let selectedCategoryFilter = "all";
 
-    let tourSegmentsStorage = {};
     let isDrawMode = false;
     let draggedItemIndex = null;
     let adminAudioPlayer = new Audio();
@@ -773,46 +754,9 @@
           cue_text: "",
           radius: 15
         });
-        saveToLocalStorage();
+        saveToLocalStorage(); // ★ 점 찍을 때마다 자동 저장
         renderMapByActiveMenu();
       }
-    });
-
-    // ★ 탐색기에 있는 GeoJSON 파일 직접 열어 데이터베이스에 적재하는 로더
-    document.getElementById('inpLoadGeoJSONFile').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        try {
-          const geojson = JSON.parse(evt.target.result);
-          const coords = geojson.geometry ? geojson.geometry.coordinates : [];
-          if (!coords || coords.length === 0) {
-            alert("유효한 LineString 좌표가 없는 GeoJSON 파일입니다.");
-            return;
-          }
-
-          const tourId = masterTours[activeTourIdx].tour_id;
-          if (!tourSegmentsStorage[tourId]) tourSegmentsStorage[tourId] = {};
-          
-          // 현재 구간에 파일의 노드들 적재
-          tourSegmentsStorage[tourId][activeSegmentIdx] = coords.map(c => ({
-            lng: c[0],
-            lat: c[1],
-            has_audio: false,
-            cue_text: "",
-            radius: 15
-          }));
-
-          saveToLocalStorage();
-          renderMapByActiveMenu();
-          alert(`[${file.name}] 파일의 ${coords.length}개 보행 좌표를 성공적으로 불러왔습니다!`);
-        } catch(err) {
-          alert("GeoJSON 파일 형식이 올바르지 않습니다: " + err.message);
-        }
-      };
-      reader.readAsText(file);
     });
 
     document.getElementById('btnSavePoi').addEventListener('click', () => {
@@ -1005,6 +949,7 @@
         const fromPoiId = tour.stops[activeSegmentIdx];
         const toPoiId = tour.stops[activeSegmentIdx + 1];
 
+        // 1. 투어 전체 스팟 배경 (#1, #2...)
         const allTourCoords = [];
         tour.stops.forEach((pid, sIdx) => {
           const p = masterPOIs.find(item => item.poi_id === pid);
@@ -1033,6 +978,7 @@
           }).addTo(map);
         }
 
+        // 2. 출발 POI (#N 파란색 원형 핀)
         const fromPoi = masterPOIs.find(p => p.poi_id === fromPoiId);
         if (fromPoi) {
           const fromLatLng = [fromPoi.lat, fromPoi.lng];
@@ -1050,6 +996,7 @@
           mapLayers.markers.push(fromMarker);
         }
 
+        // 3. 도착 POI (#N+1 빨간색 원형 핀)
         const toPoi = masterPOIs.find(p => p.poi_id === toPoiId);
         if (toPoi) {
           const toLatLng = [toPoi.lat, toPoi.lng];
@@ -1067,6 +1014,7 @@
           mapLayers.markers.push(toMarker);
         }
 
+        // 4. 직전 구간의 마지막 끝점(마침표) 및 직전 완성선 렌더링
         if (activeSegmentIdx > 0) {
           const prevPoints = getSegmentPointsByIndex(activeSegmentIdx - 1);
           if (prevPoints.length > 0) {
@@ -1098,6 +1046,7 @@
         }
       }
 
+      // 5. 현재 작업 중인 보행선 렌더링
       const points = getActiveSegmentPoints();
       if (points.length > 0) {
         const latlngs = points.map(pt => [pt.lat, pt.lng]);
@@ -1187,7 +1136,7 @@
       const points = getActiveSegmentPoints();
       if (points.length > 0) {
         points.pop();
-        saveToLocalStorage();
+        saveToLocalStorage(); // ★ 취소 시에도 동기화
         renderMapByActiveMenu();
       }
     });
@@ -1196,7 +1145,7 @@
       if (confirm("현재 구간의 경로 점들을 모두 지우시겠습니까?")) {
         const tourId = masterTours[activeTourIdx].tour_id;
         tourSegmentsStorage[tourId][activeSegmentIdx] = [];
-        saveToLocalStorage();
+        saveToLocalStorage(); // ★ 삭제 시에도 동기화
         renderMapByActiveMenu();
       }
     });
@@ -1258,7 +1207,6 @@
         properties: { tour_id: tour.tour_id, tour_name: tour.title_ko, points_count: allCoords.length },
         geometry: { type: "LineString", coordinates: allCoords }
       };
-      saveToLocalStorage(); // 저장소에도 최신화
       const blob = new Blob([JSON.stringify(geojsonObj, null, 2)], { type: "application/geo+json" });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
