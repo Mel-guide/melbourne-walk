@@ -364,7 +364,6 @@
             <span>2. 도로선 긋기 에디터</span>
           </div>
 
-          <!-- 저장된 GeoJSON 파일 불러오기 도구 탑재 -->
           <div style="background:#fefce8; border:1px solid #fde047; padding:8px 10px; border-radius:6px; margin-bottom:8px;">
             <div style="font-size:11px; font-weight:bold; color:#854d0e; margin-bottom:4px;">📂 저장해 둔 GeoJSON 파일 불러오기</div>
             <input type="file" id="inpLoadGeoJSONFile" accept=".geojson,application/geo+json,application/json" style="font-size:11px; width:100%;">
@@ -409,7 +408,6 @@
   <script>
     const STORAGE_KEY = "MELB_TOUR_MASTER_DATA";
 
-    // tours_master.json과 일치하는 30개 기본 POI 마스터 풀
     let defaultPOIs = [
       {
         poi_id: "poi_flinders_station",
@@ -419,8 +417,32 @@
         lng: 144.967100,
         radius: 20,
         visit_minutes: 10,
-        script_full: "여러분, 지금 우리가 서 있는 곳은 플린더스 스트리트 역, Flinders Street Station입니다. 이곳은 단순한 기차역이 아니라 멜버른을 대표하는 상징적인 랜드마크입니다.\n\n플린더스 스트리트 역은 1854년 문을 열었습니다. 호주 최초의 도시 철도역으로 알려져 있으며, 1909년에 지금의 아름다운 노란색 건물이 완성되었습니다. 둥근 초록색 구리 돔과 시계탑이 어우러진 이 건물은 100년이 넘는 세월 동안 멜버른 시민들의 만남의 장소가 되어 왔습니다.\n\n역 정문 위를 한번 보세요. 여러 개의 시계가 보이시죠? 이 시계들은 각 노선의 다음 출발 시간을 표시합니다. 멜버른 사람들은 오래전부터 “I'll meet you under the clocks.”, 즉 “시계 아래에서 만나자.” 라는 표현을 사용할 정도로 이곳을 약속 장소로 이용해 왔습니다. 지금도 많은 사람들이 이 시계 아래에서 친구와 가족을 기다립니다.\n\n플린더스 스트리트 역은 하루에도 수십만 명이 이용하는 빅토리아주의 가장 바쁜 기차역입니다. 이곳에서 멜버른 교외와 지방 도시로 가는 다양한 열차가 출발합니다.\n\n이제 길 건너편을 보시면 페더레이션 스퀘어, 그리고 오른쪽에는 세인트 폴 대성당이 있습니다. 역사적인 건축물과 현대적인 광장이 마주 보고 있는 모습은 멜버른의 과거와 현재를 함께 보여주는 대표적인 풍경입니다.\n\n사진을 찍는다면 가장 인기 있는 장소는 길 건너편 페더레이션 스퀘어 계단입니다. 이곳에서는 역 건물 전체와 돔, 그리고 시계탑까지 한 프레임에 담을 수 있습니다. 특히 해 질 무렵 황금빛 햇살이 건물 외벽을 비추는 시간에는 더욱 아름다운 사진을 남길 수 있습니다.\n\n플린더스 스트리트 역은 단순한 교통시설이 아니라, 170년 넘게 멜버른 사람들의 일상과 역사를 함께해 온 도시의 심장이라고 할 수 있습니다.",
+        script_full: "플린더스 스트리트 역은 1854년 문을 연 호주 최초의 도시 철도역입니다.",
         nav_cue: "스완스톤가 신호등을 건너 페더레이션 광장으로 진입하세요.",
+        audio_url: ""
+      },
+      {
+        poi_id: "poi_federation_sq",
+        name_ko: "페더레이션 광장",
+        category: "예술/문화",
+        lat: -37.818000,
+        lng: 144.969100,
+        radius: 25,
+        visit_minutes: 15,
+        script_full: "호주 연방 결성 100주년 기념 현대 예술 문화 광장입니다.",
+        nav_cue: "북쪽 플린더스가를 따라 호시어 레인으로 이동하세요.",
+        audio_url: ""
+      },
+      {
+        poi_id: "poi_hosier_lane",
+        name_ko: "호시어 레인",
+        category: "예술/문화",
+        lat: -37.816300,
+        lng: 144.969100,
+        radius: 15,
+        visit_minutes: 15,
+        script_full: "멜버른 시가 공식 지정한 합법 그래피티 골목의 시초입니다.",
+        nav_cue: "스완스톤가 방향으로 나와 세인트 폴 대성당으로 향하세요.",
         audio_url: ""
       },
       {
@@ -431,38 +453,54 @@
         lng: 144.967800,
         radius: 15,
         visit_minutes: 15,
-        script_full: "여러분, 지금 보시는 건물이 바로 세인트 폴 대성당입니다. 멜버른을 대표하는 성공회 성당이자, 130년이 넘는 역사를 간직한 도시의 상징적인 건축물입니다.\n\n이 성당은 1891년에 완공되었습니다. 영국 건축가 윌리엄 버터필드가 설계했으며, 중세 유럽 성당의 모습을 되살린 고딕 리바이벌 양식으로 지어졌습니다. 가장 눈에 띄는 것은 하늘을 향해 뾰족하게 솟은 첨탑과 화려한 스테인드글라스 창문입니다. 중앙 첨탑의 높이는 약 95미터로, 완공 당시에는 멜버른에서 가장 높은 건물 가운데 하나였습니다.\n\n성당의 외벽을 자세히 보면 돌의 색이 조금씩 다른 것을 볼 수 있습니다. 빅토리아주 여러 지역에서 가져온 사암을 함께 사용했기 때문인데, 시간이 지나면서 자연스럽게 다양한 색을 띠게 되어 더욱 아름다운 분위기를 만들어 냈습니다.\n\n안으로 들어가면 높은 천장과 아름다운 스테인드글라스가 가장 먼저 눈에 들어옵니다. 햇빛이 창문을 통과하면 내부가 여러 가지 색으로 물들어 매우 신비롭고 평화로운 분위기를 느낄 수 있습니다. 지금도 예배가 열리는 살아 있는 성당이기 때문에 내부에서는 조용히 관람하는 것이 예의입니다.\n\n이곳이 특별한 이유는 바로 주변 풍경 때문입니다. 맞은편에는 플린더스 스트리트 역이 있고, 옆에는 현대적인 페더레이션 스퀘어가 자리하고 있습니다. 한쪽에는 19세기 역사적인 성당, 다른 한쪽에는 멜버른의 대표적인 기차역, 그리고 현대적인 문화 공간이 함께 있어 멜버른의 과거와 현재를 한눈에 볼 수 있는 장소입니다.",
-        nav_cue: "플린더스가를 따라 동쪽으로 이동해 호시어 레인으로 진입하세요.",
+        script_full: "1891년에 완공된 네오고딕 양식의 성공회 대성당입니다.",
+        nav_cue: "플린더스 레인을 따라 디그레이브스 스트리트로 가세요.",
         audio_url: ""
       },
-      { poi_id: "poi_federation_sq", name_ko: "페더레이션 광장", category: "예술/문화", lat: -37.818000, lng: 144.969100, radius: 25, visit_minutes: 15, script_full: "호주 연방 결성 100주년 기념 현대 예술 문화 광장입니다.", nav_cue: "북쪽 횡단보도를 건너 성당 정문으로 가세요.", audio_url: "" },
-      { poi_id: "poi_hosier_lane", name_ko: "호시어 레인", category: "예술/문화", lat: -37.816300, lng: 144.969100, radius: 15, visit_minutes: 15, script_full: "멜버른 시가 공식 지정한 합법 그래피티 골목의 시초입니다.", nav_cue: "골목 끝에서 좌회전 후 디그레이브스 거리로 향하세요.", audio_url: "" },
-      { poi_id: "poi_acdc_lane", name_ko: "AC/DC 레인", category: "예술/문화", lat: -37.815600, lng: 144.970400, radius: 15, visit_minutes: 10, script_full: "호주 록 밴드 AC/DC를 테마로 한 골목입니다.", nav_cue: "플린더스 레인을 따라 서쪽으로 이동하세요.", audio_url: "" },
-      { poi_id: "poi_degraves_st", name_ko: "디그레이브스 스트리트", category: "커피/미식", lat: -37.817353, lng: 144.965758, radius: 15, visit_minutes: 15, script_full: "이탈리아 이민자들이 정착시킨 멜버른 커피 문화를 상징하는 대표 에스프레소 골목입니다.", nav_cue: "센터 플레이스를 거쳐 블록 아케이드로 진입하세요.", audio_url: "" },
-      { poi_id: "poi_centre_place", name_ko: "센터 플레이스", category: "커피/미식", lat: -37.816677, lng: 144.965431, radius: 10, visit_minutes: 10, script_full: "영화 세트장 같은 좁은 보행로에 샌드위치 바와 카페가 밀집해 있습니다.", nav_cue: "블록 아케이드 정문으로 들어가세요.", audio_url: "" },
-      { poi_id: "poi_block_arcade", name_ko: "블록 아케이드", category: "건축/디자인", lat: -37.815800, lng: 144.965200, radius: 15, visit_minutes: 20, script_full: "1892년 밀라노 양식으로 지어진 아케이드로 모자이크 바닥 타일이 압권입니다.", nav_cue: "스완스톤가를 따라 북쪽 도서관 잔디밭으로 이동하세요.", audio_url: "" },
-      { poi_id: "poi_royal_arcade", name_ko: "로열 아케이드", category: "건축/디자인", lat: -37.814545, lng: 144.964101, radius: 15, visit_minutes: 15, script_full: "1869년 개장한 호주에서 가장 오래된 쇼핑 아케이드입니다.", nav_cue: "버크 스트리트 몰로 나가세요.", audio_url: "" },
-      { poi_id: "poi_bourke_st_mall", name_ko: "버크 스트리트 몰", category: "건축/디자인", lat: -37.813963, lng: 144.964224, radius: 20, visit_minutes: 15, script_full: "자동차 없이 오직 트램과 보행자만 다니는 중심 쇼핑 거리입니다.", nav_cue: "스완스톤가를 따라 북쪽으로 이동하세요.", audio_url: "" },
-      { poi_id: "poi_town_hall", name_ko: "멜버른 시청", category: "역사/유적", lat: -37.815100, lng: 144.966600, radius: 15, visit_minutes: 10, script_full: "1870년 완공된 르네상스 부흥 양식 건물입니다.", nav_cue: "콜린스 스트리트를 따라 동쪽으로 이동하세요.", audio_url: "" },
-      { poi_id: "poi_scots_church", name_ko: "스코츠 교회", category: "건축/디자인", lat: -37.814400, lng: 144.968600, radius: 15, visit_minutes: 10, script_full: "1874년 네오고딕 양식 교회입니다.", nav_cue: "러셀가를 따라 북쪽으로 이동하세요.", audio_url: "" },
-      { poi_id: "poi_state_library", name_ko: "빅토리아 주립도서관", category: "역사/유적", lat: -37.809800, lng: 144.965200, radius: 25, visit_minutes: 25, script_full: "1856년 개관한 호주 최고 공공도서관이며 라트로브 돔 열람실이 백미입니다.", nav_cue: "러셀가를 따라 올드 멜버른 감옥으로 이동하세요. (도보 4분)", audio_url: "" },
-      { poi_id: "poi_melbourne_central", name_ko: "멜버른 센트럴", category: "건축/디자인", lat: -37.810500, lng: 144.963100, radius: 20, visit_minutes: 15, script_full: "유리 원뿔 돔 쇼핑몰입니다.", nav_cue: "차이나타운 방향으로 이동하세요.", audio_url: "" },
-      { poi_id: "poi_chinatown", name_ko: "차이나타운", category: "역사/유적", lat: -37.812200, lng: 144.968900, radius: 15, visit_minutes: 15, script_full: "골드러시 시기 중국인 거리입니다.", nav_cue: "리틀 버크 스트리트를 따라 걸어보세요.", audio_url: "" },
-      { poi_id: "poi_old_melb_gaol", name_ko: "올드 멜버른 감옥", category: "역사/유적", lat: -37.807800, lng: 144.965400, radius: 15, visit_minutes: 20, script_full: "19세기 식민지 시절 흉악범들을 수용하고 처형했던 역사적 청석 감옥입니다.", nav_cue: "빅토리아가를 따라 칼턴 가든으로 이동하세요. (도보 8분)", audio_url: "" },
-      { poi_id: "poi_parliament", name_ko: "빅토리아 의사당", category: "역사/유적", lat: -37.811100, lng: 144.973700, radius: 20, visit_minutes: 15, script_full: "1856년부터 빅토리아주 의회가 열리는 유서 깊은 민주주의의 산실입니다.", nav_cue: "기스본가를 건너 세인트 패트릭 대성당으로 이동하세요. (도보 3분)", audio_url: "" },
-      { poi_id: "poi_st_patricks", name_ko: "세인트 패트릭 대성당", category: "건축/디자인", lat: -37.810000, lng: 144.976300, radius: 20, visit_minutes: 20, script_full: "호주 최대 규모의 웅장한 고딕 양식 가톨릭 대성당입니다.", nav_cue: "성당 앞 정원을 둘러보며 인문학 투어를 마칩니다.", audio_url: "" },
-      { poi_id: "poi_qvm", name_ko: "퀸 빅토리아 마켓", category: "커피/미식", lat: -37.807600, lng: 144.956800, radius: 30, visit_minutes: 40, script_full: "남반구 최대 야외 재래시장입니다.", nav_cue: "엘리자베스 스트리트로 나가세요.", audio_url: "" },
-      { poi_id: "poi_royal_mint", name_ko: "구 왕립 조폐국", category: "역사/유적", lat: -37.812800, lng: 144.957500, radius: 15, visit_minutes: 15, script_full: "골드러시 시절 조폐국입니다.", nav_cue: "윌리엄 스트리트로 이동하세요.", audio_url: "" },
-      { poi_id: "poi_southbank", name_ko: "사우스뱅크 프롬나드", category: "자연/공원", lat: -37.820200, lng: 144.963900, radius: 25, visit_minutes: 25, script_full: "야라강 남쪽 보행자 산책로입니다.", nav_cue: "강변 다리를 건너 이동하세요.", audio_url: "" },
-      { poi_id: "poi_skydeck", name_ko: "유레카 스카이덱", category: "건축/디자인", lat: -37.821700, lng: 144.964700, radius: 20, visit_minutes: 30, script_full: "88층 전망대입니다.", nav_cue: "국립미술관으로 향하세요.", audio_url: "" },
-      { poi_id: "poi_ngv", name_ko: "빅토리아 국립미술관", category: "예술/문화", lat: -37.822600, lng: 144.968900, radius: 30, visit_minutes: 45, script_full: "호주 최고 미술관입니다.", nav_cue: "보타닉 가든으로 걸어가세요.", audio_url: "" },
-      { poi_id: "poi_botanic_gardens", name_ko: "로열 보타닉 가든", category: "자연/공원", lat: -37.830400, lng: 144.979600, radius: 35, visit_minutes: 40, script_full: "도심 속 거대한 호수 정원입니다.", nav_cue: "기억의 사당으로 향하세요.", audio_url: "" },
-      { poi_id: "poi_shrine", name_ko: "전몰자 기억의 사당", category: "역사/유적", lat: -37.830600, lng: 144.973400, radius: 30, visit_minutes: 25, script_full: "그리스 신전 양식 추모 사당입니다.", nav_cue: "플린더스 역으로 돌아오세요.", audio_url: "" },
-      { poi_id: "poi_royal_exhibition", name_ko: "왕립 전시관", category: "역사/유적", lat: -37.804700, lng: 144.971700, radius: 25, visit_minutes: 20, script_full: "1880년 만국박람회를 위해 건립된 호주 최초의 유네스코 세계문화유산 건물입니다.", nav_cue: "바로 뒤편 멜버른 박물관으로 향하세요. (도보 1분)", audio_url: "" },
-      { poi_id: "poi_melb_museum", name_ko: "멜버른 박물관", category: "예술/문화", lat: -37.803500, lng: 144.971700, radius: 25, visit_minutes: 40, script_full: "남반구 최대 규모의 자연사 및 원주민 인류학 박물관입니다.", nav_cue: "스프링가의 빅토리아 의사당으로 이동하세요. (도보 10분)", audio_url: "" },
-      { poi_id: "poi_fitzroy_gardens", name_ko: "피츠로이 가든", category: "자연/공원", lat: -37.813600, lng: 144.979400, radius: 30, visit_minutes: 25, script_full: "쿡스 코티지가 있는 공원입니다.", nav_cue: "크리켓 경기장으로 이동하세요.", audio_url: "" },
-      { poi_id: "poi_mcg", name_ko: "멜버른 크리켓 그라운드", category: "역사/유적", lat: -37.819900, lng: 144.983400, radius: 30, visit_minutes: 30, script_full: "10만 명 수용 스포츠 경기장입니다.", nav_cue: "사우스뱅크로 이동하세요.", audio_url: "" },
-      { poi_id: "poi_lygon_st", name_ko: "라이곤 스트리트", category: "커피/미식", lat: -37.798900, lng: 144.966900, radius: 25, visit_minutes: 30, script_full: "리틀 이탈리아 미식 거리입니다.", nav_cue: "투어가 종료되었습니다.", audio_url: "" }
+      {
+        poi_id: "poi_degraves_st",
+        name_ko: "디그레이브스 스트리트",
+        category: "커피/미식",
+        lat: -37.817353,
+        lng: 144.965758,
+        radius: 15,
+        visit_minutes: 15,
+        script_full: "멜버른 커피 문화를 상징하는 대표 에스프레소 골목입니다.",
+        nav_cue: "센터 플레이스를 거쳐 블록 아케이드로 진입하세요.",
+        audio_url: ""
+      },
+      {
+        poi_id: "poi_block_arcade",
+        name_ko: "블록 아케이드",
+        category: "건축/디자인",
+        lat: -37.815800,
+        lng: 144.965200,
+        radius: 15,
+        visit_minutes: 20,
+        script_full: "1892년 밀라노 양식으로 지어진 아케이드입니다.",
+        nav_cue: "스완스톤가를 따라 북쪽 도서관 잔디밭으로 이동하세요.",
+        audio_url: ""
+      },
+      {
+        poi_id: "poi_state_library",
+        name_ko: "빅토리아 주립도서관",
+        category: "역사/유적",
+        lat: -37.809800,
+        lng: 144.965200,
+        radius: 25,
+        visit_minutes: 25,
+        script_full: "1856년 개관한 호주 최고 공공도서관입니다.",
+        nav_cue: "러셀가를 따라 올드 멜버른 감옥으로 이동하세요.",
+        audio_url: ""
+      },
+      { poi_id: "poi_centre_place", name_ko: "센터 플레이스", category: "커피/미식", lat: -37.816677, lng: 144.965431, radius: 10, visit_minutes: 10, script_full: "골목 샌드위치 바 거리입니다.", nav_cue: "블록 아케이드로 가세요.", audio_url: "" },
+      { poi_id: "poi_royal_arcade", name_ko: "로열 아케이드", category: "건축/디자인", lat: -37.814545, lng: 144.964101, radius: 15, visit_minutes: 15, script_full: "가장 오래된 아케이드입니다.", nav_cue: "버크 스트리트 몰로 나가세요.", audio_url: "" },
+      { poi_id: "poi_bourke_st_mall", name_ko: "버크 스트리트 몰", category: "건축/디자인", lat: -37.813963, lng: 144.964224, radius: 20, visit_minutes: 15, script_full: "트램 쇼핑가입니다.", nav_cue: "투어가 끝났습니다.", audio_url: "" },
+      { poi_id: "poi_old_melb_gaol", name_ko: "올드 멜버른 감옥", category: "역사/유적", lat: -37.807800, lng: 144.965400, radius: 15, visit_minutes: 20, script_full: "청석 감옥입니다.", nav_cue: "칼턴 가든으로 이동하세요.", audio_url: "" },
+      { poi_id: "poi_royal_exhibition", name_ko: "왕립 전시관", category: "역사/유적", lat: -37.804700, lng: 144.971700, radius: 25, visit_minutes: 20, script_full: "유네스코 세계유산입니다.", nav_cue: "박물관으로 가세요.", audio_url: "" },
+      { poi_id: "poi_melb_museum", name_ko: "멜버른 박물관", category: "예술/문화", lat: -37.803500, lng: 144.971700, radius: 25, visit_minutes: 40, script_full: "자연사 박물관입니다.", nav_cue: "의사당으로 이동하세요.", audio_url: "" },
+      { poi_id: "poi_parliament", name_ko: "빅토리아 의사당", category: "역사/유적", lat: -37.811100, lng: 144.973700, radius: 20, visit_minutes: 15, script_full: "유서 깊은 의사당입니다.", nav_cue: "대성당으로 가세요.", audio_url: "" },
+      { poi_id: "poi_st_patricks", name_ko: "세인트 패트릭 대성당", category: "건축/디자인", lat: -37.810000, lng: 144.976300, radius: 20, visit_minutes: 20, script_full: "고딕 대성당입니다.", nav_cue: "투어를 마칩니다.", audio_url: "" }
     ];
 
     let defaultTours = [
@@ -471,7 +509,7 @@
         title_ko: "멜버른 핵심 7선 도보 투어",
         estimated_min: 75,
         distance_km: 2.3,
-        stops: ["poi_flinders_station", "poi_federation_sq", "poi_st_pauls", "poi_hosier_lane", "poi_degraves_st", "poi_block_arcade", "poi_state_library"]
+        stops: ["poi_flinders_station", "poi_federation_sq", "poi_hosier_lane", "poi_st_pauls", "poi_degraves_st", "poi_block_arcade", "poi_state_library"]
       },
       {
         tour_id: "tour_arcade_coffee_5",
@@ -491,7 +529,7 @@
 
     let masterPOIs = defaultPOIs;
     let masterTours = defaultTours;
-    let tourSegmentsStorage = {}; // ★ 누락되었던 전역 변수 선언 추가
+    let tourSegmentsStorage = {}; // 단일 선언으로 버그 방지
 
     const savedDataStr = localStorage.getItem(STORAGE_KEY);
     if (savedDataStr) {
@@ -505,7 +543,6 @@
       }
     }
 
-    // 경로선 및 컴파일된 전체 좌표까지 함께 localStorage에 저장
     function saveToLocalStorage() {
       const compiledRoutes = {};
       Object.keys(tourSegmentsStorage).forEach(tid => {
@@ -801,7 +838,7 @@
       }
     });
 
-    // 탐색기 내 GeoJSON 파일 직접 열어 에디터에 적재
+    // GeoJSON 파일 로더
     document.getElementById('inpLoadGeoJSONFile').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (!file) return;

@@ -9,22 +9,18 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; flex-direction: column; background: #f8fafc; color: #0f172a; overflow: hidden; }
 
-    /* 상단 내비게이션 바 */
     header { height: 54px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; flex-shrink: 0; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
     .header-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
     .header-right { display: flex; align-items: center; gap: 8px; }
     .btn-gps { background: #1e293b; color: #38bdf8; border: 1px solid #334155; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
     .btn-gps.active { background: #0284c7; color: white; border-color: #0284c7; }
 
-    /* 투어 선택 드롭다운 바 */
     .tour-selector-bar { background: #ffffff; padding: 8px 14px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; z-index: 999; }
     .tour-select { flex: 1; height: 36px; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 0 10px; font-size: 13px; font-weight: 600; color: #1e293b; background: white; outline: none; }
     .tour-meta { font-size: 11px; color: #64748b; white-space: nowrap; }
 
-    /* 지도 영역 */
     #map { flex: 1; width: 100%; height: 100%; z-index: 10; }
 
-    /* 하단 가변형 바텀 시트 */
     .bottom-sheet {
       position: fixed; bottom: 0; left: 0; right: 0;
       background: white; border-radius: 18px 18px 0 0;
@@ -54,7 +50,6 @@
     .spot-title { font-size: 16px; font-weight: 800; color: #0f172a; line-height: 1.3; }
     .spot-category { font-size: 11px; color: #64748b; }
 
-    /* 오디오 플레이어 UI */
     .audio-player-box {
       background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
       padding: 8px 12px; display: flex; align-items: center; justify-content: space-between;
@@ -77,24 +72,20 @@
     .btn-toggle-sheet { 
       background: white; border: 1px solid #cbd5e1; border-radius: 6px; 
       padding: 6px 10px; font-size: 11px; font-weight: 600; cursor: pointer; color: #475569;
-      transition: background 0.2s, border-color 0.2s;
     }
 
-    /* 길안내 알림창 */
     .cue-banner {
       background: #eff6ff; border-left: 4px solid #2563eb;
       padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: 12px;
       color: #1e40af; margin-bottom: 10px; line-height: 1.4;
     }
 
-    /* 본 해설 텍스트 스크립트 */
     .script-box {
       font-size: 13px; line-height: 1.65; color: #334155;
       background: #fdfdfd; border: 1px solid #f1f5f9; border-radius: 8px;
       padding: 12px; white-space: pre-line;
     }
 
-    /* Leaflet 커스텀 마커 */
     .leaflet-div-icon { background: transparent !important; border: none !important; }
     .marker-stop {
       background: #2563eb; color: white; border: 2.5px solid white; border-radius: 50%;
@@ -127,7 +118,6 @@
 
   <div id="map"></div>
 
-  <!-- 하단 상세 정보 시트 -->
   <div class="bottom-sheet" id="bottomSheet">
     <div class="sheet-handle-bar" id="sheetHandleBar">
       <div class="sheet-handle"></div>
@@ -159,8 +149,59 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
+    const STORAGE_KEY = "MELB_TOUR_MASTER_DATA";
+
+    // 1. 파일 시스템 차단 시 사용할 100% 안전 기본 투어 데이터
+    const fallbackTours = [
+      {
+        tour_id: "tour_melb_essentials_7",
+        title_ko: "멜버른 핵심 7선 도보 투어",
+        estimated_min: 75,
+        distance_km: 2.3,
+        route_file: "data/routes/route_tour_melb_essentials_7.geojson",
+        stops: [
+          { sequence: 1, poi_id: "poi_flinders_station", name_ko: "플린더스 스트리트 역", category: "역사/유적", lat: -37.818, lng: 144.9671, radius: 20, visit_minutes: 10, script_full: "플린더스 스트리트 역은 1854년 문을 연 호주 최초의 도시 철도역입니다.", nav_cue: "스완스톤가 신호등을 건너 페더레이션 광장으로 진입하세요.", audio_url: "" },
+          { sequence: 2, poi_id: "poi_federation_sq", name_ko: "페더레이션 광장", category: "예술/문화", lat: -37.818, lng: 144.9691, radius: 25, visit_minutes: 15, script_full: "호주 연방 결성 100주년 기념 현대 예술 문화 광장입니다.", nav_cue: "플린더스가를 따라 호시어 레인으로 이동하세요.", audio_url: "" },
+          { sequence: 3, poi_id: "poi_hosier_lane", name_ko: "호시어 레인", category: "예술/문화", lat: -37.8163, lng: 144.9691, radius: 15, visit_minutes: 15, script_full: "멜버른 시가 공식 지정한 합법 그래피티 골목의 시초입니다.", nav_cue: "골목을 나와 세인트 폴 대성당으로 향하세요.", audio_url: "" },
+          { sequence: 4, poi_id: "poi_st_pauls", name_ko: "세인트 폴 대성당", category: "건축/디자인", lat: -37.8169, lng: 144.9678, radius: 15, visit_minutes: 15, script_full: "1891년에 완공된 네오고딕 양식의 성공회 대성당입니다.", nav_cue: "플린더스 레인을 따라 디그레이브스 스트리트로 가세요.", audio_url: "" },
+          { sequence: 5, poi_id: "poi_degraves_st", name_ko: "디그레이브스 스트리트", category: "커피/미식", lat: -37.817353, lng: 144.965758, radius: 15, visit_minutes: 15, script_full: "멜버른 커피 문화를 상징하는 대표 에스프레소 골목입니다.", nav_cue: "센터 플레이스를 거쳐 블록 아케이드로 진입하세요.", audio_url: "" },
+          { sequence: 6, poi_id: "poi_block_arcade", name_ko: "블록 아케이드", category: "건축/디자인", lat: -37.8158, lng: 144.9652, radius: 15, visit_minutes: 20, script_full: "1892년 밀라노 양식으로 지어진 아케이드입니다.", nav_cue: "스완스톤가를 따라 북쪽 도서관 잔디밭으로 이동하세요.", audio_url: "" },
+          { sequence: 7, poi_id: "poi_state_library", name_ko: "빅토리아 주립도서관", category: "역사/유적", lat: -37.8098, lng: 144.9652, radius: 25, visit_minutes: 25, script_full: "1856년 개관한 호주 최고 공공도서관입니다.", nav_cue: "도보 투어가 모두 완료되었습니다.", audio_url: "" }
+        ]
+      },
+      {
+        tour_id: "tour_arcade_coffee_5",
+        title_ko: "아케이드 & 커피 골목 감성 투어",
+        estimated_min: 45,
+        distance_km: 0.9,
+        route_file: "data/routes/route_tour_arcade_coffee_5.geojson",
+        stops: [
+          { sequence: 1, poi_id: "poi_degraves_st", name_ko: "디그레이브스 스트리트", category: "커피/미식", lat: -37.817353, lng: 144.965758, radius: 15, visit_minutes: 15, script_full: "멜버른 커피 문화를 상징하는 대표 에스프레소 골목입니다.", nav_cue: "센터 플레이스를 거쳐 블록 아케이드로 진입하세요.", audio_url: "" },
+          { sequence: 2, poi_id: "poi_centre_place", name_ko: "센터 플레이스", category: "커피/미식", lat: -37.816677, lng: 144.965431, radius: 10, visit_minutes: 10, script_full: "영화 세트장 같은 골목 샌드위치 바 거리입니다.", nav_cue: "블록 아케이드 정문으로 들어가세요.", audio_url: "" },
+          { sequence: 3, poi_id: "poi_block_arcade", name_ko: "블록 아케이드", category: "건축/디자인", lat: -37.8158, lng: 144.9652, radius: 15, visit_minutes: 20, script_full: "1892년 밀라노 양식으로 지어진 아케이드입니다.", nav_cue: "로열 아케이드로 이동하세요.", audio_url: "" },
+          { sequence: 4, poi_id: "poi_royal_arcade", name_ko: "로열 아케이드", category: "건축/디자인", lat: -37.814545, lng: 144.964101, radius: 15, visit_minutes: 15, script_full: "1869년 개장한 호주에서 가장 오래된 쇼핑 아케이드입니다.", nav_cue: "버크 스트리트 몰로 나가세요.", audio_url: "" },
+          { sequence: 5, poi_id: "poi_bourke_st_mall", name_ko: "버크 스트리트 몰", category: "건축/디자인", lat: -37.813963, lng: 144.964224, radius: 20, visit_minutes: 15, script_full: "오직 트램과 보행자만 다니는 중심 쇼핑 거리입니다.", nav_cue: "투어가 종료되었습니다.", audio_url: "" }
+        ]
+      },
+      {
+        tour_id: "tour_culture_history_6",
+        title_ko: "멜버른 인문학 & 세계유산 투어",
+        estimated_min: 80,
+        distance_km: 2.1,
+        route_file: "data/routes/route_tour_culture_history_6.geojson",
+        stops: [
+          { sequence: 1, poi_id: "poi_state_library", name_ko: "빅토리아 주립도서관", category: "역사/유적", lat: -37.8098, lng: 144.9652, radius: 25, visit_minutes: 25, script_full: "1856년 개관한 호주 최고 공공도서관입니다.", nav_cue: "러셀가를 따라 올드 멜버른 감옥으로 이동하세요.", audio_url: "" },
+          { sequence: 2, poi_id: "poi_old_melb_gaol", name_ko: "올드 멜버른 감옥", category: "역사/유적", lat: -37.8078, lng: 144.9654, radius: 15, visit_minutes: 20, script_full: "19세기 식민지 시절 역사적 청석 감옥입니다.", nav_cue: "빅토리아가를 따라 칼턴 가든으로 이동하세요.", audio_url: "" },
+          { sequence: 3, poi_id: "poi_royal_exhibition", name_ko: "왕립 전시관", category: "역사/유적", lat: -37.8047, lng: 144.9717, radius: 25, visit_minutes: 20, script_full: "유네스코 세계문화유산 건물입니다.", nav_cue: "멜버른 박물관으로 향하세요.", audio_url: "" },
+          { sequence: 4, poi_id: "poi_melb_museum", name_ko: "멜버른 박물관", category: "예술/문화", lat: -37.8035, lng: 144.9717, radius: 25, visit_minutes: 40, script_full: "자연사 및 인류학 박물관입니다.", nav_cue: "의사당으로 이동하세요.", audio_url: "" },
+          { sequence: 5, poi_id: "poi_parliament", name_ko: "빅토리아 의사당", category: "역사/유적", lat: -37.8111, lng: 144.9737, radius: 20, visit_minutes: 15, script_full: "1856년부터 시작된 의사당입니다.", nav_cue: "세인트 패트릭 대성당으로 이동하세요.", audio_url: "" },
+          { sequence: 6, poi_id: "poi_st_patricks", name_ko: "세인트 패트릭 대성당", category: "건축/디자인", lat: -37.81, lng: 144.9763, radius: 20, visit_minutes: 20, script_full: "호주 최대 고딕 양식 가톨릭 대성당입니다.", nav_cue: "투어가 종료되었습니다.", audio_url: "" }
+        ]
+      }
+    ];
+
     let currentTourData = null;
-    let currentToursList = [];
+    let currentToursList = fallbackTours;
     let activeTourIdx = 0;
     let activeStopIdx = 0;
 
@@ -188,7 +229,7 @@
     }
 
     function initMap() {
-      map = L.map('map', { zoomControl: false }).setView([-37.818000, 144.967100], 16);
+      map = L.map('map', { zoomControl: false }).setView([-37.818000, 144.967100], 15);
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19,
         attribution: 'Tiles &copy; Esri'
@@ -207,32 +248,62 @@
       window.speechSynthesis.onvoiceschanged = getKoVoice;
     }
 
-    // tours_master.json 파일만 직접 로드 (캐시 무효화 파라미터 포함)
+    // 1단계: localStorage 탐색 -> 2단계: tours_master.json fetch -> 3단계: 기본 내장 데이터 보장
     async function loadTourMasterData() {
+      const localDataStr = localStorage.getItem(STORAGE_KEY);
+      if (localDataStr) {
+        try {
+          const parsed = JSON.parse(localDataStr);
+          const mPois = parsed.masterPOIs || [];
+          const mTours = parsed.masterTours || [];
+
+          if (mTours.length > 0) {
+            currentToursList = mTours.map(t => ({
+              tour_id: t.tour_id,
+              title_ko: t.title_ko,
+              estimated_min: t.estimated_min || 60,
+              distance_km: t.distance_km || 2.0,
+              route_file: `data/routes/route_${t.tour_id}.geojson`,
+              stops: t.stops.map((poiId, idx) => {
+                const p = mPois.find(item => item.poi_id === poiId) || {};
+                return {
+                  sequence: idx + 1,
+                  poi_id: p.poi_id || poiId,
+                  name_ko: p.name_ko || "이름 미정",
+                  category: p.category || "기타",
+                  lat: p.lat || 0,
+                  lng: p.lng || 0,
+                  radius: p.radius || 15,
+                  visit_minutes: p.visit_minutes || 15,
+                  script_full: p.script_full || p.desc || "",
+                  desc: p.script_full || p.desc || "",
+                  nav_cue: p.nav_cue || "다음 번호 마커를 향해 이동하세요.",
+                  audio_url: p.audio_url || ""
+                };
+              })
+            }));
+            return;
+          }
+        } catch (e) {
+          console.error("Local storage parsing error:", e);
+        }
+      }
+
+      // 서버 환경(HTTP/HTTPS)일 경우 tours_master.json fetch
       try {
         const res = await fetch(`tours_master.json?t=${Date.now()}`);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        
-        currentToursList = (data.tours || []).map(tour => {
-          let sortedStops = (tour.stops || []).map((stop, idx) => ({
-            ...stop,
-            sequence: stop.sequence || (idx + 1),
-            desc: stop.script_full || stop.desc || ""
-          }));
-
-          // sequence 필드가 있을 경우 명시적 오름차순 정렬
-          sortedStops.sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
-
-          // 정렬 순서대로 1, 2, 3 재부여
-          sortedStops = sortedStops.map((s, idx) => ({ ...s, sequence: idx + 1 }));
-
-          return { ...tour, stops: sortedStops };
-        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.tours && data.tours.length > 0) {
+            currentToursList = data.tours;
+            return;
+          }
+        }
       } catch (err) {
-        console.error("tours_master.json 로드 실패:", err);
-        alert("투어 데이터(tours_master.json)를 불러오지 못했습니다.");
+        // file:/// 환경에서는 fetch가 실패하므로 기본 내장 데이터(fallbackTours) 유지
       }
+
+      currentToursList = fallbackTours;
     }
 
     function renderTourSelector() {
@@ -284,10 +355,25 @@
       if (bounds.length > 0) map.fitBounds(bounds, { padding: [40, 40] });
     }
 
-    // GeoJSON 보행 도로선 로드
+    // 1순위: localStorage 실측 선 -> 2순위: GeoJSON 파일 fetch -> 3순위: 직선 연결
     async function loadTourRoutePolyline(tour) {
       if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null; }
 
+      // 1. localStorage에서 compiledRoutes 확인
+      const localDataStr = localStorage.getItem(STORAGE_KEY);
+      if (localDataStr) {
+        try {
+          const parsed = JSON.parse(localDataStr);
+          if (parsed.compiledRoutes && parsed.compiledRoutes[tour.tour_id]) {
+            const coords = parsed.compiledRoutes[tour.tour_id];
+            routePolyline = L.polyline(coords, { color: '#2563eb', weight: 5, opacity: 0.9 }).addTo(map);
+            map.fitBounds(routePolyline.getBounds(), { padding: [40, 40] });
+            return;
+          }
+        } catch(e) {}
+      }
+
+      // 2. data/routes/ 폴더 내 파일 fetch 시도
       const paths = [
         tour.route_file,
         `data/routes/route_${tour.tour_id}.geojson`,
@@ -301,11 +387,16 @@
           if (res.ok) {
             const geojson = await res.json();
             const coords = geojson.geometry.coordinates.map(c => [c[1], c[0]]);
-            routePolyline = L.polyline(coords, { color: '#2563eb', weight: 5, opacity: 0.85 }).addTo(map);
-            break;
+            routePolyline = L.polyline(coords, { color: '#2563eb', weight: 5, opacity: 0.9 }).addTo(map);
+            map.fitBounds(routePolyline.getBounds(), { padding: [40, 40] });
+            return;
           }
         } catch (e) {}
       }
+
+      // 3. 선이 없을 경우 스팟 간 직선 점선 표시
+      const straightCoords = tour.stops.map(s => [s.lat, s.lng]);
+      routePolyline = L.polyline(straightCoords, { color: '#94a3b8', weight: 2, dashArray: '4, 6' }).addTo(map);
     }
 
     function selectStop(index, isGeofenceTrigger = false) {
@@ -382,6 +473,12 @@
       });
 
       document.getElementById('btnGpsToggle').addEventListener('click', toggleGPS);
+
+      window.addEventListener('storage', (e) => {
+        if (e.key === STORAGE_KEY) {
+          loadTourMasterData().then(() => loadTour(activeTourIdx));
+        }
+      });
     }
 
     function playTTS(text) {
