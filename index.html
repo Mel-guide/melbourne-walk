@@ -159,8 +159,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const STORAGE_KEY = "MELB_TOUR_MASTER_DATA";
-
     let currentTourData = null;
     let currentToursList = [];
     let activeTourIdx = 0;
@@ -199,7 +197,6 @@
       L.control.zoom({ position: 'topright' }).addTo(map);
     }
 
-    // 모바일 비동기 음성 합성 엔진 준비
     function setupVoiceSynthesis() {
       if (!('speechSynthesis' in window)) return;
       const getKoVoice = () => {
@@ -210,45 +207,31 @@
       window.speechSynthesis.onvoiceschanged = getKoVoice;
     }
 
-    // 데이터 우선순위: LocalStorage (관리자가 편집한 내용) -> tours_master.json 파일
+    // tours_master.json 파일만 직접 로드 (캐시 무효화 파라미터 포함)
     async function loadTourMasterData() {
-      const local = localStorage.getItem(STORAGE_KEY);
-      if (local) {
-        try {
-          const parsed = JSON.parse(local);
-          if (parsed.masterTours && parsed.masterPOIs) {
-            currentToursList = parsed.masterTours.map(t => ({
-              ...t,
-              stops: t.stops.map((id, sIdx) => {
-                const poi = parsed.masterPOIs.find(p => p.poi_id === id) || {};
-                return {
-                  sequence: sIdx + 1,
-                  poi_id: id,
-                  name_ko: poi.name_ko || "명소",
-                  category: poi.category || "명소",
-                  lat: poi.lat,
-                  lng: poi.lng,
-                  radius: poi.radius || 15,
-                  desc: poi.script_full || "",
-                  script_full: poi.script_full || "",
-                  nav_cue: poi.nav_cue || "",
-                  audio_url: poi.audio_url || ""
-                };
-              })
-            }));
-            return;
-          }
-        } catch (e) {
-          console.error("LocalStorage 로드 실패", e);
-        }
-      }
-
       try {
-        const res = await fetch('tours_master.json');
+        const res = await fetch(`tours_master.json?t=${Date.now()}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-        currentToursList = data.tours || [];
+        
+        currentToursList = (data.tours || []).map(tour => {
+          let sortedStops = (tour.stops || []).map((stop, idx) => ({
+            ...stop,
+            sequence: stop.sequence || (idx + 1),
+            desc: stop.script_full || stop.desc || ""
+          }));
+
+          // sequence 필드가 있을 경우 명시적 오름차순 정렬
+          sortedStops.sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+
+          // 정렬 순서대로 1, 2, 3 재부여
+          sortedStops = sortedStops.map((s, idx) => ({ ...s, sequence: idx + 1 }));
+
+          return { ...tour, stops: sortedStops };
+        });
       } catch (err) {
-        console.error("tours_master.json 로드 실패", err);
+        console.error("tours_master.json 로드 실패:", err);
+        alert("투어 데이터(tours_master.json)를 불러오지 못했습니다.");
       }
     }
 
@@ -271,7 +254,7 @@
       currentTourData = currentToursList[idx];
       if (!currentTourData) return;
 
-      document.getElementById('tourMetaInfo').innerText = `${currentTourData.estimated_min}분 / ${currentTourData.distance_km}km`;
+      document.getElementById('tourMetaInfo').innerText = `${currentTourData.estimated_min || '--'}분 / ${currentTourData.distance_km || '--'}km`;
 
       renderStopsOnMap();
       await loadTourRoutePolyline(currentTourData);
@@ -301,22 +284,9 @@
       if (bounds.length > 0) map.fitBounds(bounds, { padding: [40, 40] });
     }
 
-    // GeoJSON 보행 도로선 안전 로드 (LocalStorage -> route_file -> 기본 경로 순)
+    // GeoJSON 보행 도로선 로드
     async function loadTourRoutePolyline(tour) {
       if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null; }
-
-      const local = localStorage.getItem(STORAGE_KEY);
-      if (local) {
-        try {
-          const parsed = JSON.parse(local);
-          if (parsed.compiledRoutes && parsed.compiledRoutes[tour.tour_id]) {
-            routePolyline = L.polyline(parsed.compiledRoutes[tour.tour_id], {
-              color: '#2563eb', weight: 5, opacity: 0.85
-            }).addTo(map);
-            return;
-          }
-        } catch (e) {}
-      }
 
       const paths = [
         tour.route_file,
@@ -327,7 +297,7 @@
       for (const p of paths) {
         if (!p) continue;
         try {
-          const res = await fetch(p);
+          const res = await fetch(`${p}?t=${Date.now()}`);
           if (res.ok) {
             const geojson = await res.json();
             const coords = geojson.geometry.coordinates.map(c => [c[1], c[0]]);
@@ -370,7 +340,6 @@
       const handleBar = document.getElementById('sheetHandleBar');
       const btnToggle = document.getElementById('btnToggleDetail');
 
-      // 바텀시트 열고 닫기 토글 함수
       const toggleSheet = (e) => {
         if (e) e.stopPropagation();
         const isExpanded = sheet.classList.toggle('expanded');
@@ -381,7 +350,7 @@
           btnToggle.innerText = "대본 보기 ↕";
           btnToggle.style.background = "white";
           const content = sheet.querySelector('.sheet-content');
-          if (content) content.scrollTop = 0; // 접을 때 상단으로 스크롤 복원
+          if (content) content.scrollTop = 0;
         }
       };
 
@@ -483,7 +452,6 @@
       }
     }
 
-    // 지오펜싱 감지 (도착 시 햅틱 진동 + 펄스 유도)
     function checkGeofence(uLat, uLng) {
       if (!currentTourData) return;
       currentTourData.stops.forEach((stop, idx) => {
