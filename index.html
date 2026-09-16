@@ -24,23 +24,30 @@
     /* 지도 영역 */
     #map { flex: 1; width: 100%; height: 100%; z-index: 10; }
 
-    /* 하단 가변형 바텀 시트 (기본: 축소 모드, 확장 시 전체 대본 표시) */
+    /* 하단 가변형 바텀 시트 */
     .bottom-sheet {
       position: fixed; bottom: 0; left: 0; right: 0;
       background: white; border-radius: 18px 18px 0 0;
       box-shadow: 0 -4px 20px rgba(0,0,0,0.18);
-      z-index: 1001; transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      max-height: 140px; display: flex; flex-direction: column;
+      z-index: 1001; 
+      height: 140px;
+      max-height: 140px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; flex-direction: column;
     }
-    .bottom-sheet.expanded { max-height: 60vh; }
+    .bottom-sheet.expanded { 
+      height: 70vh; 
+      max-height: 70vh; 
+    }
 
     .sheet-handle-bar {
-      width: 100%; height: 26px; display: flex; justify-content: center; align-items: center;
-      cursor: pointer; flex-shrink: 0; border-bottom: 1px solid #f8fafc;
+      width: 100%; height: 32px; display: flex; justify-content: center; align-items: center;
+      cursor: pointer; flex-shrink: 0; border-bottom: 1px solid #f1f5f9;
+      touch-action: none;
     }
-    .sheet-handle { width: 40px; height: 4px; background: #cbd5e1; border-radius: 2px; }
+    .sheet-handle { width: 44px; height: 5px; background: #cbd5e1; border-radius: 3px; }
 
-    .sheet-content { padding: 4px 18px 18px 18px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+    .sheet-content { padding: 8px 18px 24px 18px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
     
     .spot-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
     .spot-num-badge { background: #2563eb; color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 2px; }
@@ -67,7 +74,11 @@
     }
 
     .player-text { flex: 1; font-size: 12px; font-weight: 600; color: #334155; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .btn-toggle-sheet { background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px 9px; font-size: 11px; font-weight: 600; cursor: pointer; color: #475569; }
+    .btn-toggle-sheet { 
+      background: white; border: 1px solid #cbd5e1; border-radius: 6px; 
+      padding: 6px 10px; font-size: 11px; font-weight: 600; cursor: pointer; color: #475569;
+      transition: background 0.2s, border-color 0.2s;
+    }
 
     /* 길안내 알림창 */
     .cue-banner {
@@ -359,7 +370,21 @@
       const handleBar = document.getElementById('sheetHandleBar');
       const btnToggle = document.getElementById('btnToggleDetail');
 
-      const toggleSheet = () => sheet.classList.toggle('expanded');
+      // 바텀시트 열고 닫기 토글 함수
+      const toggleSheet = (e) => {
+        if (e) e.stopPropagation();
+        const isExpanded = sheet.classList.toggle('expanded');
+        if (isExpanded) {
+          btnToggle.innerText = "대본 닫기 ✕";
+          btnToggle.style.background = "#e2e8f0";
+        } else {
+          btnToggle.innerText = "대본 보기 ↕";
+          btnToggle.style.background = "white";
+          const content = sheet.querySelector('.sheet-content');
+          if (content) content.scrollTop = 0; // 접을 때 상단으로 스크롤 복원
+        }
+      };
+
       handleBar.addEventListener('click', toggleSheet);
       btnToggle.addEventListener('click', toggleSheet);
 
