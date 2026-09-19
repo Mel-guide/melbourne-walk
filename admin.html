@@ -89,9 +89,12 @@
 
     .marker-menu1 { background: #2563eb; color: white; border: 2px solid white; border-radius: 50%; width: 28px !important; height: 28px !important; line-height: 24px; text-align: center; font-size: 12px; font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,0.35); }
     .marker-menu2-target { background: #ef4444; color: white; border: 3px solid white; border-radius: 50%; width: 32px !important; height: 32px !important; line-height: 26px; text-align: center; font-size: 16px; box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
-    .marker-r-from { background: #2563eb !important; color: white !important; border: 3px solid white !important; border-radius: 50% !important; width: 32px !important; height: 32px !important; line-height: 26px !important; text-align: center !important; font-size: 13px !important; font-weight: 900 !important; box-shadow: 0 3px 8px rgba(37,99,235,0.6) !important; }
-    .marker-r-to { background: #dc2626 !important; color: white !important; border: 3px solid white !important; border-radius: 50% !important; width: 32px !important; height: 32px !important; line-height: 26px !important; text-align: center !important; font-size: 13px !important; font-weight: 900 !important; box-shadow: 0 3px 8px rgba(220,38,38,0.6) !important; }
-    .marker-r-context { background: #94a3b8 !important; color: white !important; border: 2px solid white !important; border-radius: 50% !important; width: 22px !important; height: 22px !important; line-height: 18px !important; text-align: center !important; font-size: 11px !important; font-weight: bold !important; opacity: 0.8 !important; box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important; }
+    .marker-r-from { background: #2563eb !important; color: white !important; border: 3px solid white !important; border-radius: 50% !important; width: 32px !important; height: 32px !important; line-height: 26px !important; text-align: center !important; font-size: 13px !important; font-weight: 900 !important; box-shadow: 0 3px 8px rgba(37,99,235,0.6) !important; cursor: grab; }
+    .marker-r-from:active { cursor: grabbing; }
+    .marker-r-to { background: #dc2626 !important; color: white !important; border: 3px solid white !important; border-radius: 50% !important; width: 32px !important; height: 32px !important; line-height: 26px !important; text-align: center !important; font-size: 13px !important; font-weight: 900 !important; box-shadow: 0 3px 8px rgba(220,38,38,0.6) !important; cursor: grab; }
+    .marker-r-to:active { cursor: grabbing; }
+    .marker-r-context { background: #94a3b8 !important; color: white !important; border: 2px solid white !important; border-radius: 50% !important; width: 22px !important; height: 22px !important; line-height: 18px !important; text-align: center !important; font-size: 11px !important; font-weight: bold !important; opacity: 0.8 !important; box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important; cursor: grab; }
+    .marker-r-context:active { cursor: grabbing; }
     .marker-prev-endpoint { background: #eab308 !important; color: #0f172a !important; border: 2px solid white !important; border-radius: 6px !important; padding: 2px 6px !important; font-size: 11px !important; font-weight: bold !important; white-space: nowrap !important; box-shadow: 0 2px 6px rgba(0,0,0,0.4) !important; cursor: pointer !important; display: inline-block; width: auto !important; height: auto !important; }
     .marker-pool-chip { color: white; border: 2px solid white; border-radius: 50%; width: 22px !important; height: 22px !important; line-height: 18px; text-align: center; font-size: 11px; box-shadow: 0 2px 4px rgba(0,0,0,0.25); cursor: pointer; }
     .marker-trigger-audio { background: #8b5cf6 !important; color: white; border: 2px solid white; border-radius: 50%; width: 24px !important; height: 24px !important; line-height: 20px; text-align: center; font-size: 11px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
@@ -104,9 +107,9 @@
     <h1>Melbourne CMS</h1>
     <div class="menu-selector-wrap">
       <select id="mainMenuSelector" class="mode-dropdown">
-        <option value="panelTour" selected>🏷️ 메뉴 1: 투어 상품 & 코스 순서 관리</option>
+        <option value="panelTour">🏷️ 메뉴 1: 투어 상품 & 코스 순서 관리</option>
         <option value="panelPoiEdit">📍 메뉴 2: POI 단일 등록 / 수정</option>
-        <option value="panelRouteDraw">🗺️ 메뉴 3: VoiceMap식 보행 루트 에디터</option>
+        <option value="panelRouteDraw" selected>🗺️ 메뉴 3: VoiceMap식 보행 루트 에디터</option>
         <option value="panelPoiPool">📋 메뉴 4: 전체 POI 마스터 풀 (30선 매핑)</option>
       </select>
     </div>
@@ -119,7 +122,7 @@
     <div class="sidebar">
 
       <!-- [메뉴 1] -->
-      <div id="panelTour" class="menu-panel active">
+      <div id="panelTour" class="menu-panel">
         <div class="panel-box">
           <div class="panel-header">
             <span>투어 상품 선택 & 기본정보</span>
@@ -262,7 +265,6 @@
             <textarea id="inpPoiNavCue" style="height:50px; border-color:#93c5fd;" placeholder="다음 스팟으로 걸어가는 길안내 지침 작성"></textarea>
           </div>
 
-          <!-- 메뉴 1로 돌아가는 초록색 버튼 -->
           <div class="form-group" style="margin-top:4px; margin-bottom:4px;">
             <button class="btn btn-green" id="btnJumpToMenu1">메뉴1로 이동</button>
           </div>
@@ -275,8 +277,8 @@
         </div>
       </div>
 
-      <!-- [메뉴 3] -->
-      <div id="panelRouteDraw" class="menu-panel">
+      <!-- [메뉴 3: VoiceMap식 보행 루트 에디터] -->
+      <div id="panelRouteDraw" class="menu-panel active">
         <div class="panel-box" style="background:#eff6ff; border-color:#bfdbfe;">
           <div class="panel-header" style="color:#1d4ed8; margin-bottom:6px;">
             <span>1. 투어 상품 & 이동 구간 선택</span>
@@ -301,9 +303,9 @@
           </div>
 
           <div style="background:#f1f5f9; padding:8px 10px; border-radius:6px; font-size:11px; margin-bottom:8px; line-height:1.5;">
-            <div>🔵 <strong>파란색 핀</strong>: 현재 구간의 출발 스팟</div>
-            <div>🔴 <strong>빨간색 핀</strong>: 현재 구간의 도착 스팟</div>
-            <div>🚩 <strong>노란색 핀</strong>: 직전 구간의 마지막 끝점 (클릭 시 자동 연결)</div>
+            <div>🔵 <strong>파란색 핀</strong>: 현재 구간 출발 (드래그 이동 가능)</div>
+            <div>🔴 <strong>빨간색 핀</strong>: 현재 구간 도착 (드래그 이동 가능)</div>
+            <div>✨ <em>구간을 바꾸면 다른 구간 선은 안전하게 보존되며, 현재 구간만 개별 편집됩니다.</em></div>
           </div>
 
           <div class="form-group">
@@ -312,7 +314,7 @@
 
           <div class="btn-wrap" style="margin-bottom:10px;">
             <button class="btn btn-gray" id="btnUndoPoint" style="flex:1;">↩️ 마지막 점 취소</button>
-            <button class="btn btn-red" id="btnClearRoute">구간 선 지우기</button>
+            <button class="btn btn-red" id="btnClearRoute">현재 구간 선만 지우기</button>
           </div>
 
           <div class="form-group" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:10px;">
@@ -447,7 +449,9 @@
         const segs = tourSegmentsStorage[tid] || {};
         let coords = [];
         Object.keys(segs).sort((a,b) => Number(a)-Number(b)).forEach(k => {
-          segs[k].forEach(n => coords.push([n.lat, n.lng]));
+          if (segs[k] && Array.isArray(segs[k])) {
+            segs[k].forEach(n => coords.push([n.lat, n.lng]));
+          }
         });
         if (coords.length >= 2) compiledRoutes[tid] = coords;
       });
@@ -473,7 +477,7 @@
 
     let mapLayers = {
       markers: [],
-      polyline: null,
+      polylines: [], // 다중 구간 선 관리를 위해 배열로 변경
       contextPolyline: null,
       prevPolyline: null,
       circle: null
@@ -717,12 +721,10 @@
       }
     });
 
-    // 메뉴 1로 이동 버튼 동작
     document.getElementById('btnJumpToMenu1').addEventListener('click', () => {
       switchPanel("panelTour");
     });
 
-    // 메뉴 1에서 특정 스팟의 [편집] 버튼을 눌렀을 때 호출되는 함수
     window.jumpToEditPoiFromMenu1 = function(poiId) {
       switchPanel("panelPoiEdit");
       loadPoiToForm(poiId);
@@ -808,7 +810,7 @@
 
           saveToLocalStorage();
           renderMapByActiveMenu();
-          alert(`[${file.name}] 파일의 ${coords.length}개 보행 좌표를 성공적으로 불러왔습니다!`);
+          alert(`[${file.name}] 파일의 ${coords.length}개 보행 좌표를 현재 구간에 반영했습니다!`);
         } catch(err) {
           alert("GeoJSON 파일 형식이 올바르지 않습니다: " + err.message);
         }
@@ -874,10 +876,11 @@
     function clearMapLayers() {
       mapLayers.markers.forEach(m => map.removeLayer(m));
       mapLayers.markers = [];
-      if (mapLayers.polyline) {
-        map.removeLayer(mapLayers.polyline);
-        mapLayers.polyline = null;
-      }
+      
+      // 다중 폴리라인 안전 제거
+      mapLayers.polylines.forEach(pl => map.removeLayer(pl));
+      mapLayers.polylines = [];
+
       if (mapLayers.prevPolyline) {
         map.removeLayer(mapLayers.prevPolyline);
         mapLayers.prevPolyline = null;
@@ -931,11 +934,12 @@
         mapLayers.markers.push(marker);
       });
 
-      mapLayers.polyline = L.polyline(pathCoords, {
+      const mainPolyline = L.polyline(pathCoords, {
         color: '#2563eb', weight: 3, opacity: 0.8, dashArray: '5, 8'
       }).addTo(map);
+      mapLayers.polylines.push(mainPolyline);
 
-      map.fitBounds(mapLayers.polyline.getBounds(), { padding: [50, 50] });
+      map.fitBounds(mainPolyline.getBounds(), { padding: [50, 50] });
     }
 
     function renderMenu2Map() {
@@ -966,129 +970,107 @@
       }
     }
 
+    // ★ [메뉴 3]: 각 구간별 선을 독립적으로 보여주고 다른 구간 선은 안전하게 보존하는 렌더러
     function renderMenu3Map() {
       const tour = masterTours[activeTourIdx];
       const bounds = [];
 
       if (tour && tour.stops.length > 0) {
+        const tourId = tour.tour_id;
+        if (!tourSegmentsStorage[tourId]) tourSegmentsStorage[tourId] = {};
+        const segs = tourSegmentsStorage[tourId];
+
+        // 1. 이미 그려져 있는 다른 모든 구간의 선들을 흐리게(회색/청록색) 먼저 안전하게 화면에 띄움
+        Object.keys(segs).forEach(sKey => {
+          const sIdx = parseInt(sKey, 10);
+          if (sIdx !== activeSegmentIdx && segs[sIdx] && segs[sIdx].length >= 2) {
+            const coords = segs[sIdx].map(n => [n.lat, n.lng]);
+            const otherPl = L.polyline(coords, { color: '#0d9488', weight: 3, opacity: 0.4, dashArray: '3, 5' }).addTo(map);
+            mapLayers.polylines.push(otherPl);
+          }
+        });
+
         const fromPoiId = tour.stops[activeSegmentIdx];
         const toPoiId = tour.stops[activeSegmentIdx + 1];
 
-        const allTourCoords = [];
+        // 2. 투어의 모든 스팟 마커 (드래그하여 위치 수정 가능)
         tour.stops.forEach((pid, sIdx) => {
           const p = masterPOIs.find(item => item.poi_id === pid);
           if (p) {
             const pLatLng = [p.lat, p.lng];
-            allTourCoords.push(pLatLng);
+            bounds.push(pLatLng);
 
-            if (pid !== fromPoiId && pid !== toPoiId) {
-              const bgMarker = L.marker(pLatLng, {
-                icon: L.divIcon({
-                  className: 'marker-r-context',
-                  html: `<div>#${sIdx + 1}</div>`,
-                  iconSize: [22, 22],
-                  iconAnchor: [11, 11]
-                })
-              }).addTo(map);
-              bgMarker.bindTooltip(`<b>#${sIdx + 1} ${p.name_ko}</b>`);
-              mapLayers.markers.push(bgMarker);
+            const isFrom = (pid === fromPoiId);
+            const isTo = (pid === toPoiId);
+            
+            let markerClass = 'marker-r-context';
+            let iconSize = [22, 22];
+            let anchor = [11, 11];
+            let labelBadge = `#${sIdx + 1}`;
+
+            if (isFrom) {
+              markerClass = 'marker-r-from';
+              iconSize = [32, 32];
+              anchor = [16, 16];
+              labelBadge = `#${activeSegmentIdx + 1}`;
+            } else if (isTo) {
+              markerClass = 'marker-r-to';
+              iconSize = [32, 32];
+              anchor = [16, 16];
+              labelBadge = `#${activeSegmentIdx + 2}`;
             }
-          }
-        });
 
-        if (allTourCoords.length >= 2) {
-          mapLayers.contextPolyline = L.polyline(allTourCoords, {
-            color: '#cbd5e1', weight: 2, dashArray: '4, 8', opacity: 0.6
-          }).addTo(map);
-        }
-
-        const fromPoi = masterPOIs.find(p => p.poi_id === fromPoiId);
-        if (fromPoi) {
-          const fromLatLng = [fromPoi.lat, fromPoi.lng];
-          bounds.push(fromLatLng);
-          const fromMarker = L.marker(fromLatLng, {
-            icon: L.divIcon({
-              className: 'marker-r-from',
-              html: `<div>#${activeSegmentIdx + 1}</div>`,
-              iconSize: [32, 32],
-              iconAnchor: [16, 16]
-            }),
-            zIndexOffset: 3000
-          }).addTo(map);
-          fromMarker.bindTooltip(`<b>[출발 #${activeSegmentIdx + 1}] ${fromPoi.name_ko}</b>`, { permanent: false, direction: 'top' });
-          mapLayers.markers.push(fromMarker);
-        }
-
-        const toPoi = masterPOIs.find(p => p.poi_id === toPoiId);
-        if (toPoi) {
-          const toLatLng = [toPoi.lat, toPoi.lng];
-          bounds.push(toLatLng);
-          const toMarker = L.marker(toLatLng, {
-            icon: L.divIcon({
-              className: 'marker-r-to',
-              html: `<div>#${activeSegmentIdx + 2}</div>`,
-              iconSize: [32, 32],
-              iconAnchor: [16, 16]
-            }),
-            zIndexOffset: 3000
-          }).addTo(map);
-          toMarker.bindTooltip(`<b>[도착 #${activeSegmentIdx + 2}] ${toPoi.name_ko}</b>`, { permanent: false, direction: 'top' });
-          mapLayers.markers.push(toMarker);
-        }
-
-        if (activeSegmentIdx > 0) {
-          const prevPoints = getSegmentPointsByIndex(activeSegmentIdx - 1);
-          if (prevPoints.length > 0) {
-            const prevLatLngs = prevPoints.map(pt => [pt.lat, pt.lng]);
-            mapLayers.prevPolyline = L.polyline(prevLatLngs, {
-              color: '#0d9488', weight: 4, opacity: 0.5, dashArray: '3, 6'
-            }).addTo(map);
-
-            const lastNode = prevPoints[prevPoints.length - 1];
-            bounds.push([lastNode.lat, lastNode.lng]);
-
-            const endpointMarker = L.marker([lastNode.lat, lastNode.lng], {
+            const marker = L.marker(pLatLng, {
               icon: L.divIcon({
-                className: 'marker-prev-endpoint',
-                html: `🚩 직전 구간 끝점`,
-                iconAnchor: [20, 10]
+                className: markerClass,
+                html: `<div>${labelBadge}</div>`,
+                iconSize: iconSize,
+                iconAnchor: anchor
               }),
-              zIndexOffset: 3500
+              draggable: true,
+              zIndexOffset: (isFrom || isTo) ? 3000 : 2000
             }).addTo(map);
 
-            endpointMarker.bindPopup(`
-              <div style="font-size:12px; min-width:160px;">
-                <strong>구간 ${activeSegmentIdx}번의 마침표</strong><br>
-                <button class="btn btn-blue" style="font-size:11px; padding:4px 8px; width:100%; margin-top:4px;" onclick="snapStartFromPrevEndpoint(${lastNode.lat}, ${lastNode.lng})">이 점에서 이번 구간 시작하기</button>
-              </div>
-            `);
-            mapLayers.markers.push(endpointMarker);
+            marker.bindTooltip(`<b>[#${sIdx + 1}] ${p.name_ko}</b><br><span style="font-size:10px; color:#2563eb;">✋ 드래그하여 위치 변경 가능</span>`);
+
+            marker.on('dragend', function(e) {
+              const newPos = e.target.getLatLng();
+              p.lat = Number(newPos.lat.toFixed(6));
+              p.lng = Number(newPos.lng.toFixed(6));
+              saveToLocalStorage();
+              renderMapByActiveMenu();
+              renderAllPoiList();
+            });
+
+            mapLayers.markers.push(marker);
           }
-        }
-      }
-
-      const points = getActiveSegmentPoints();
-      if (points.length > 0) {
-        const latlngs = points.map(pt => [pt.lat, pt.lng]);
-        latlngs.forEach(pt => bounds.push(pt));
-
-        mapLayers.polyline = L.polyline(latlngs, { color: '#2563eb', weight: 5, opacity: 0.9 }).addTo(map);
-
-        points.forEach((node, idx) => {
-          let markerIcon = node.has_audio
-            ? L.divIcon({ className: 'marker-trigger-audio', html: '🔊', iconSize: [24, 24], iconAnchor: [12, 12] })
-            : L.divIcon({ className: 'marker-node-silent', iconAnchor: [5, 5] });
-
-          const marker = L.marker([node.lat, node.lng], { icon: markerIcon }).addTo(map);
-          marker.bindPopup(`<div style="font-size:12px;">노드 #${idx + 1}</div>`);
-          mapLayers.markers.push(marker);
         });
+
+        // 3. 현재 집중 편집 중인 'Active Segment'의 보행선 강조 렌더링
+        const currentPoints = getActiveSegmentPoints();
+        if (currentPoints.length > 0) {
+          const latlngs = currentPoints.map(pt => [pt.lat, pt.lng]);
+          latlngs.forEach(pt => bounds.push(pt));
+
+          const activePl = L.polyline(latlngs, { color: '#2563eb', weight: 5, opacity: 0.9 }).addTo(map);
+          mapLayers.polylines.push(activePl);
+
+          currentPoints.forEach((node, idx) => {
+            let markerIcon = node.has_audio
+              ? L.divIcon({ className: 'marker-trigger-audio', html: '🔊', iconSize: [24, 24], iconAnchor: [12, 12] })
+              : L.divIcon({ className: 'marker-node-silent', iconAnchor: [5, 5] });
+
+            const nodeMarker = L.marker([node.lat, node.lng], { icon: markerIcon }).addTo(map);
+            nodeMarker.bindPopup(`<div style="font-size:12px;">현재 구간 노드 #${idx + 1}</div>`);
+            mapLayers.markers.push(nodeMarker);
+          });
+        }
       }
 
       if (bounds.length > 0) {
         map.fitBounds(bounds, { padding: [60, 60] });
       }
-      document.getElementById('routeNodeCount').innerText = `${points.length}개`;
+      document.getElementById('routeNodeCount').innerText = `${getActiveSegmentPoints().length}개`;
     }
 
     function renderMenu4Map() {
@@ -1122,14 +1104,6 @@
 
       if (bounds.length > 0) map.fitBounds(bounds, { padding: [40, 40] });
     }
-
-    window.snapStartFromPrevEndpoint = function(lat, lng) {
-      const points = getActiveSegmentPoints();
-      points.unshift({ lng: Number(lng.toFixed(6)), lat: Number(lat.toFixed(6)), has_audio: false, cue_text: "", radius: 15 });
-      saveToLocalStorage();
-      renderMapByActiveMenu();
-      alert("직전 구간의 끝점이 이번 구간의 시작점으로 완벽히 연결되었습니다!");
-    };
 
     function renderSegmentDropdown() {
       const selSeg = document.getElementById('selRouteSegment');
@@ -1194,7 +1168,7 @@
     });
 
     document.getElementById('btnClearRoute').addEventListener('click', () => {
-      if (confirm("현재 구간의 경로 점들을 모두 지우시겠습니까?")) {
+      if (confirm(`현재 구간(${activeSegmentIdx + 1}번 구간)의 경로 점들만 초기화하시겠습니까? (다른 구간 선은 안전하게 유지됩니다)`)) {
         const tourId = masterTours[activeTourIdx].tour_id;
         tourSegmentsStorage[tourId][activeSegmentIdx] = [];
         saveToLocalStorage();
@@ -1251,7 +1225,9 @@
       const segs = tourSegmentsStorage[tourId] || {};
       let allCoords = [];
       Object.keys(segs).sort((a,b) => Number(a)-Number(b)).forEach(k => {
-        segs[k].forEach(n => allCoords.push([n.lng, n.lat]));
+        if (segs[k] && Array.isArray(segs[k])) {
+          segs[k].forEach(n => allCoords.push([n.lng, n.lat]));
+        }
       });
       if (allCoords.length < 2) return alert("최소 2개 이상의 노드를 찍어주세요.");
       const geojsonObj = {
@@ -1358,7 +1334,9 @@
       const listEl = document.getElementById('allPoiList');
       listEl.innerHTML = "";
       const q = document.getElementById('inpFilterPoi').value.trim().toLowerCase();
-      const sortMode = document.getElementById('selPoiSort').value;
+      let sortMode = "usage_desc";
+      const sortSelect = document.getElementById('selPoiSort');
+      if (sortSelect) sortMode = sortSelect.value;
       const currentTourStopIds = masterTours[activeTourIdx] ? masterTours[activeTourIdx].stops : [];
 
       let list = [...masterPOIs];
@@ -1396,6 +1374,7 @@
     }
 
     window.togglePoiInCurrentTour = function(poiId, e) {
+      if (e) idCheck = true;
       if (e) e.stopPropagation();
       const currentStops = masterTours[activeTourIdx].stops;
       const foundIdx = currentStops.indexOf(poiId);
