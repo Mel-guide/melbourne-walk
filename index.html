@@ -7,100 +7,15 @@
   
   <!-- Leaflet Map CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
-  <style>
-    :root {
-      --primary: #1a73e8;
-      --primary-hover: #1557b0;
-      --bg-gray: #f8f9fa;
-      --border-color: #dadce0;
-      --text-main: #202124;
-      --text-muted: #5f6368;
-      --gate1-color: #1a73e8;
-      --gate2-color: #34a853;
-      --gate3-color: #e37400;
-      --danger: #d93025;
-      --warning-bg: #fef7e0;
-      --warning-border: #f9ab00;
-      --success: #188038;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: var(--text-main); background: var(--bg-gray); }
-    
-    header { background: #fff; border-bottom: 1px solid var(--border-color); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
-    header h1 { font-size: 1.15rem; font-weight: 700; color: #111; display: flex; align-items: center; gap: 8px; }
-    header .badge { font-size: 0.75rem; background: #e8f0fe; color: var(--primary); padding: 3px 8px; border-radius: 12px; font-weight: 600; }
-    
-    .container { display: grid; grid-template-columns: 580px 1fr; height: calc(100vh - 58px); }
-    
-    /* 좌측 폼 패널 */
-    .form-panel { background: #fff; border-right: 1px solid var(--border-color); overflow-y: auto; padding: 20px 24px; }
-    .section-title { font-size: 0.95rem; font-weight: 700; border-bottom: 2px solid var(--primary); padding-bottom: 6px; margin: 24px 0 14px; display: flex; justify-content: space-between; align-items: center; }
-    .section-title:first-child { margin-top: 0; }
-    
-    .form-group { margin-bottom: 12px; }
-    .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--text-muted); }
-    .form-control { width: 100%; padding: 8px 10px; font-size: 0.85rem; border: 1px solid var(--border-color); border-radius: 4px; background: #fff; transition: border-color 0.2s; }
-    .form-control:focus { border-color: var(--primary); outline: none; }
-    .form-control[readonly], .form-control:disabled { background: #f1f3f4; cursor: not-allowed; }
-    textarea.form-control { resize: vertical; min-height: 75px; line-height: 1.45; }
-    
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-    
-    /* 게이트 카드 디자인 */
-    .gate-card { background: var(--bg-gray); border: 1px solid var(--border-color); border-radius: 4px; padding: 12px; margin-bottom: 10px; transition: opacity 0.2s; }
-    .gate-card.gate-1 { border-left: 4px solid var(--gate1-color); }
-    .gate-card.gate-2 { border-left: 4px solid var(--gate2-color); }
-    .gate-card.gate-3 { border-left: 4px solid var(--gate3-color); }
-    .gate-card h4 { font-size: 0.82rem; font-weight: 700; margin-bottom: 8px; display: flex; justify-content: space-between; }
-    
-    /* 오디오 바인딩 카드 & 낭독 카운터 */
-    .audio-card { background: #fcfdfe; border: 1px solid #d2e3fc; border-radius: 4px; padding: 14px; margin-bottom: 14px; }
-    .audio-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .audio-tag { font-size: 0.75rem; background: #e8f0fe; color: var(--primary); padding: 3px 8px; border-radius: 4px; font-weight: 700; }
-    .speech-indicator { font-size: 0.78rem; font-weight: bold; color: var(--danger); }
-    .audio-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; font-family: monospace; }
-    
-    /* 비공개 관리자 노트 */
-    .admin-notes-card { background: var(--warning-bg); border: 1px solid var(--warning-border); padding: 12px; border-radius: 4px; }
-    
-    /* 우측 맵 패널 */
-    .map-panel { display: flex; flex-direction: column; height: 100%; position: relative; }
-    #map { flex: 1; z-index: 1; }
-    
-    .map-controls-overlay { position: absolute; bottom: 24px; left: 16px; z-index: 1000; background: rgba(255,255,255,0.95); padding: 10px 14px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-size: 0.8rem; pointer-events: auto; }
-    .map-legend { display: flex; gap: 12px; margin-top: 6px; }
-    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; }
-    .legend-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
-    
-    .action-bar { background: #fff; border-top: 1px solid var(--border-color); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 2; }
-    
-    /* 버튼 스타일 */
-    .btn { padding: 8px 14px; border-radius: 4px; border: 1px solid transparent; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.15s ease-in-out; }
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: var(--primary-hover); }
-    .btn-outline { background: #fff; border-color: var(--border-color); color: var(--text-main); }
-    .btn-outline:hover { background: #f1f3f4; }
-    .btn-ai { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; }
-    .btn-ai:hover { opacity: 0.92; }
-    .btn-export { background: #188038; color: white; }
-    .btn-export:hover { background: #137333; }
-    .btn-new { background: #e6f4ea; color: #137333; border: 1px solid #ceead6; font-weight: 700; }
-    .btn-new:hover { background: #ceead6; }
-    .btn-danger { background: var(--danger); color: white; border: none; }
-    .btn-danger:hover { opacity: 0.9; }
-  </style>
+  <link rel="stylesheet" href="css/cms-styles.css" />
 </head>
 <body>
 
   <header>
-    <h1>Melbourne & Outdoors Audio Guide <span class="badge">어드민 CMS v4.0</span></h1>
+    <h1>Melbourne & Outdoors Audio Guide <span class="badge">어드민 CMS v4.0 (모듈러)</span></h1>
     <div style="display: flex; gap: 8px; align-items: center;">
       <button type="button" class="btn btn-outline" id="btn_config_key">🔑 API Key 설정</button>
       <button type="button" class="btn btn-export" id="btn_export_csv">🎧 성우/TTS 큐시트(CSV)</button>
-      
-      <!-- 불러오기 / 내보내기 -->
       <input type="file" id="import_file_input" accept=".json" style="display: none;">
       <button type="button" class="btn btn-outline" id="btn_import_json">📂 JSON</button>
       <button type="button" class="btn btn-outline" id="btn_export_json">📦 내보내기</button>
@@ -120,12 +35,10 @@
           <button type="button" class="btn btn-new" id="btn_new_registration">➕ 신규 등록 모드</button>
         </div>
         
-        <!-- POI 선택 셀렉트박스 (선택해야 수정/삭제 활성화) -->
         <select id="saved_poi_selector" class="form-control">
           <option value="">-- 수정할 명소를 선택하세요 --</option>
         </select>
         
-        <!-- 통합 액션 버튼 바 (AI 자동완성, 수정 모드, 삭제, 저장) -->
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; border-top: 1px solid #d2e3fc; padding-top: 10px;">
           <button type="button" class="btn btn-ai" id="btn_ai_generate" style="justify-content: center; font-size: 0.78rem;" title="명칭 입력 후 AI 초안 생성">✨ AI 자동완성</button>
           <button type="button" class="btn btn-outline" id="btn_toggle_edit" style="border-color: #f9ab00; color: #b78103; font-weight: 700; justify-content: center; font-size: 0.78rem;" title="선택한 POI 수정 모드 전환">🔒 수정 모드</button>
@@ -134,7 +47,7 @@
         </div>
       </div>
 
-      <!-- 1. POI 기본 정보 (POIs Master v4.0) -->
+      <!-- 1. POI 기본 정보 -->
       <div class="section-title">
         <span>1. POI 기본 정보 (POIs Master)</span>
         <span style="font-size: 0.75rem; color: var(--text-muted);">* 표시는 필수</span>
@@ -143,7 +56,7 @@
       <div class="grid-2">
         <div class="form-group">
           <label>명소 명칭 (영어: name_en) [AI 검색 기준 권장] *</label>
-          <input type="text" id="name_en" class="form-control" placeholder="예: State Library Victoria, Puffing Billy..." readonly>
+          <input type="text" id="name_en" class="form-control" placeholder="예: State Library Victoria..." readonly>
         </div>
         <div class="form-group">
           <label>명소 명칭 (한국어: name_ko) *</label>
@@ -198,9 +111,7 @@
       </div>
 
       <!-- 2. 지오펜스 센서 (Gate 1~3) -->
-      <div class="section-title">
-        <span>2. 지오펜스 센서 (Gate 1~3)</span>
-      </div>
+      <div class="section-title"><span>2. 지오펜스 센서 (Gate 1~3)</span></div>
       
       <div class="form-group">
         <label><input type="checkbox" id="has_gate" checked disabled> 게이트 센서 활성화 (has_gate)</label>
@@ -210,108 +121,77 @@
       <div class="gate-card gate-1" id="gate_1_wrapper">
         <h4><span>Gate 1 (주 진입로 - 필수)</span> <span style="color:var(--gate1-color)">기본 20m</span></h4>
         <div class="grid-3">
-          <div class="form-group">
-            <label>Gate 1 Lat</label>
-            <input type="number" step="0.000001" id="gate_1_lat" class="form-control" readonly>
-          </div>
-          <div class="form-group">
-            <label>Gate 1 Lng</label>
-            <input type="number" step="0.000001" id="gate_1_lng" class="form-control" readonly>
-          </div>
-          <div class="form-group">
-            <label>Radius (m)</label>
-            <input type="number" id="gate_1_radius" class="form-control" value="20" readonly>
-          </div>
+          <div class="form-group"><label>Gate 1 Lat</label><input type="number" step="0.000001" id="gate_1_lat" class="form-control" readonly></div>
+          <div class="form-group"><label>Gate 1 Lng</label><input type="number" step="0.000001" id="gate_1_lng" class="form-control" readonly></div>
+          <div class="form-group"><label>Radius (m)</label><input type="number" id="gate_1_radius" class="form-control" value="20" readonly></div>
         </div>
       </div>
 
       <!-- Gate 2 -->
       <div class="gate-card gate-2" id="gate_2_wrapper">
-        <h4><span>Gate 2 (관통형/보조 진입로 - 선택)</span> <span style="color:var(--gate2-color)">선택</span></h4>
+        <h4><span>Gate 2 (관통형/보조 진입로)</span> <span style="color:var(--gate2-color)">선택</span></h4>
         <div class="grid-3">
-          <div class="form-group">
-            <label>Gate 2 Lat</label>
-            <input type="number" step="0.000001" id="gate_2_lat" class="form-control" readonly>
-          </div>
-          <div class="form-group">
-            <label>Gate 2 Lng</label>
-            <input type="number" step="0.000001" id="gate_2_lng" class="form-control" readonly>
-          </div>
-          <div class="form-group">
-            <label>Radius (m)</label>
-            <input type="number" id="gate_2_radius" class="form-control" value="20" readonly>
-          </div>
+          <div class="form-group"><label>Gate 2 Lat</label><input type="number" step="0.000001" id="gate_2_lat" class="form-control" readonly></div>
+          <div class="form-group"><label>Gate 2 Lng</label><input type="number" step="0.000001" id="gate_2_lng" class="form-control" readonly></div>
+          <div class="form-group"><label>Radius (m)</label><input type="number" id="gate_2_radius" class="form-control" value="20" readonly></div>
         </div>
       </div>
 
       <!-- Gate 3 -->
       <div class="gate-card gate-3" id="gate_3_wrapper">
-        <h4><span>Gate 3 (3면 개방형/광장 교차점 - 선택)</span> <span style="color:var(--gate3-color)">선택</span></h4>
+        <h4><span>Gate 3 (광장 교차점)</span> <span style="color:var(--gate3-color)">선택</span></h4>
         <div class="grid-3">
-          <div class="form-group">
-            <label>Gate 3 Lat</label>
-            <input type="number" step="0.000001" id="gate_3_lat" class="form-control" readonly>
-          </div>
-          <div class="form-group">
-            <label>Gate 3 Lng</label>
-            <input type="number" step="0.000001" id="gate_3_lng" class="form-control" readonly>
-          </div>
-          <div class="form-group">
-            <label>Radius (m)</label>
-            <input type="number" id="gate_3_radius" class="form-control" value="20" readonly>
-          </div>
+          <div class="form-group"><label>Gate 3 Lat</label><input type="number" step="0.000001" id="gate_3_lat" class="form-control" readonly></div>
+          <div class="form-group"><label>Gate 3 Lng</label><input type="number" step="0.000001" id="gate_3_lng" class="form-control" readonly></div>
+          <div class="form-group"><label>Radius (m)</label><input type="number" id="gate_3_radius" class="form-control" value="20" readonly></div>
         </div>
       </div>
 
       <!-- 3. 고객 공개 스토리 및 가이드 -->
       <div class="section-title">3. 스토리 및 현장 가이드 (Client Side)</div>
-      
       <div class="form-group">
         <label>배경 역사 요약 (story_summary: 3~4줄)</label>
-        <textarea id="story_summary" class="form-control" placeholder="명소의 역사적 배경과 핵심 스토리를 입력하세요..." readonly></textarea>
+        <textarea id="story_summary" class="form-control" placeholder="명소의 역사적 배경과 핵심 스토리..." readonly></textarea>
       </div>
-
       <div class="form-group">
-        <label>현장 꿀팁 & 포토존 (guide_tips: 시선 유도)</label>
-        <textarea id="guide_tips" class="form-control" placeholder="방문객을 위한 관람 팁 및 포토존 위치 안내..." readonly></textarea>
+        <label>현장 꿀팁 & 포토존 (guide_tips)</label>
+        <textarea id="guide_tips" class="form-control" placeholder="방문객 관람 팁 및 포토존..." readonly></textarea>
       </div>
 
-      <!-- 4. Audios 마스터 양방향 바인딩 대본 (Mono 96kbps MP3 표준 규격) -->
+      <!-- 4. 연계 오디오 대본 -->
       <div class="section-title">
-        <span>4. 연계 오디오 대본 (Audios Master 양방향 바인딩)</span>
-        <span style="font-size: 0.72rem; color: var(--text-muted);">표준: Mono 96kbps MP3</span>
+        <span>4. 연계 오디오 대본 (Audios Master)</span>
+        <span style="font-size: 0.72rem; color: var(--text-muted);">Mono 96kbps MP3</span>
       </div>
       
-      <!-- Arrival Audio -->
       <div class="audio-card">
         <div class="audio-card-header">
           <span class="audio-tag">arrival (도착 안내)</span>
           <span class="speech-indicator" id="arrival_calc">0자 | 예상 0.0초</span>
         </div>
         <div class="form-group">
-          <div class="audio-meta" id="aud_arrival_meta">ID: aud_{slug}_ko_arrival | audio/aud_{slug}_ko_arrival.mp3</div>
-          <textarea id="aud_arrival_script" class="form-control" style="margin-top:6px;" placeholder="명소에 도착했을 때 송출될 1~2문장의 구어체 안내 멘트..." readonly></textarea>
+          <div class="audio-meta" id="aud_arrival_meta">ID: aud_{slug}_ko_arrival</div>
+          <textarea id="aud_arrival_script" class="form-control" style="margin-top:6px;" placeholder="도착 안내 구어체 대본..." readonly></textarea>
         </div>
       </div>
 
-      <!-- Main Audio -->
       <div class="audio-card">
         <div class="audio-card-header">
           <span class="audio-tag">main (본해설)</span>
           <span class="speech-indicator" id="main_calc">0자 | 예상 0.0초</span>
         </div>
         <div class="form-group">
-          <div class="audio-meta" id="aud_main_meta">ID: aud_{slug}_ko_main | audio/aud_{slug}_ko_main.mp3</div>
-          <textarea id="aud_main_script" class="form-control" style="min-height: 110px; margin-top:6px;" placeholder="본격적인 역사와 비하인드 스토리를 담은 오디오 해설 대본 (공백 제외 350~450자 권장)..." readonly></textarea>
+          <div class="audio-meta" id="aud_main_meta">ID: aud_{slug}_ko_main</div>
+          <textarea id="aud_main_script" class="form-control" style="min-height: 110px; margin-top:6px;" placeholder="본해설 오디오 대본..." readonly></textarea>
         </div>
       </div>
 
-      <!-- 5. 관리자 비공개 데이터 (admin_notes - 번들 배포 시 자동 제외) -->
+      <!-- 5. 관리자 비공개 데이터 -->
       <div class="section-title">5. 관리자 비공개 데이터 (admin_notes)</div>
       <div class="admin-notes-card">
         <div class="form-group" style="margin-bottom: 0;">
-          <label style="color: #b78103; font-weight:700;">인솔/주차/안전 메모 (번들 배포 시 고객 앱에서 자동 제외)</label>
-          <textarea id="admin_notes" class="form-control" style="margin-top:4px;" placeholder="현장 인솔 시 주의할 점, 주차 위치, 안전 가이드 등 관리자 전용 메모..." readonly></textarea>
+          <label style="color: #b78103; font-weight:700;">인솔/주차/안전 메모 (고객 앱 자동 제외)</label>
+          <textarea id="admin_notes" class="form-control" style="margin-top:4px;" placeholder="관리자 전용 메모..." readonly></textarea>
         </div>
       </div>
 
@@ -320,19 +200,17 @@
     <!-- 우측 맵 패널 -->
     <div class="map-panel">
       <div id="map"></div>
-      
       <div class="map-controls-overlay">
         <strong>Geofence Gate Map Controller</strong>
         <div class="map-legend">
-          <div class="legend-item"><span class="legend-dot" style="background:var(--primary);"></span> 대표좌표 / Gate 1</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--primary);"></span> 대표 / Gate 1</div>
           <div class="legend-item"><span class="legend-dot" style="background:var(--gate2-color);"></span> Gate 2</div>
           <div class="legend-item"><span class="legend-dot" style="background:var(--gate3-color);"></span> Gate 3</div>
         </div>
       </div>
-
       <div class="action-bar">
         <div style="font-size: 0.8rem; color: var(--text-muted);">
-          💡 <strong>맵 조작 가이드</strong>: <strong>[신규 등록 모드]</strong> 또는 <strong>[수정 모드]</strong> 활성화 시 대표 마커와 Gate 1~3 핀을 드래그하여 위치를 수정할 수 있습니다.
+          💡 <strong>맵 조작 가이드</strong>: <strong>[신규 등록 모드]</strong> 또는 <strong>[수정 모드]</strong> 활성화 시 핀을 드래그하여 좌표를 수정할 수 있습니다.
         </div>
       </div>
     </div>
@@ -341,825 +219,10 @@
   <!-- Leaflet Map JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <script>
-    /**
-     * Melbourne & Outdoors Audio Guide CMS Engine (v4.0)
-     * 절대 불변 원칙 및 5대 마스터 스키마 정합성 보장
-     */
-
-    // 안전 장치: 수정 잠금 상태 관리 (기본 true: 함부로 수정 불가)
-    let isEditLocked = true;
-
-    function toggleEditMode() {
-      const selectedPoi = document.getElementById('saved_poi_selector').value;
-      if (!selectedPoi) {
-        alert("수정할 POI를 먼저 목록에서 선택하시거나 [신규 등록 모드]를 이용해 주세요.");
-        return;
-      }
-
-      isEditLocked = !isEditLocked;
-      const btn = document.getElementById('btn_toggle_edit');
-      const inputs = document.querySelectorAll('.form-panel input, .form-panel textarea, .form-panel select');
-      
-      inputs.forEach(function(el) {
-        if (el.id !== 'poi_id' && el.id !== 'slug' && el.id !== 'saved_poi_selector') {
-          if (el.tagName === 'SELECT') {
-            el.disabled = isEditLocked;
-          } else {
-            el.readOnly = isEditLocked;
-          }
-        }
-      });
-
-      if (isEditLocked) {
-        btn.innerHTML = "🔒 수정 모드";
-        btn.style.borderColor = "#f9ab00";
-        btn.style.color = "#b78103";
-        alert("🔒 안전 모드: 수정이 잠겼습니다. 데이터가 보호됩니다.");
-      } else {
-        btn.innerHTML = "🔓 수정 모드 (활성화됨)";
-        btn.style.borderColor = "#188038";
-        btn.style.color = "#188038";
-        alert("✏️ [수정 모드]가 활성화되었습니다. 이제 폼 내용을 수정하거나 지도에서 마커/게이트 핀을 드래그하여 좌표를 변경할 수 있습니다.");
-      }
-    }
-
-    // 1. 실시간 낭독 시간 계산 엔진 (불변 공식)
-    function calculateSpeechDuration(text, lang) {
-      if (!lang) lang = 'ko';
-      if (!text || typeof text !== 'string') return { count: 0, seconds: 0 };
-      if (lang === 'ko') {
-        const charCount = text.replace(/\s+/g, '').length;
-        const seconds = Math.round((charCount / 5.2) * 10) / 10;
-        return { count: charCount, seconds: seconds };
-      } else {
-        const words = text.trim().split(/\s+/).filter(Boolean);
-        const seconds = Math.round((words.length / 2.3) * 10) / 10;
-        return { count: words.length, seconds: seconds };
-      }
-    }
-
-    function updateSpeechCalc(lang, text, targetElementId) {
-      const calc = calculateSpeechDuration(text, lang);
-      const label = lang === 'ko' ? calc.count + '자' : calc.count + ' words';
-      const el = document.getElementById(targetElementId);
-      if (el) el.innerText = label + ' | 예상 ' + calc.seconds + '초';
-    }
-
-    // 2. ID 생성기 및 양방향 동기화
-    function handleSlugChange(slugVal) {
-      const cleanSlug = (slugVal || '').toLowerCase().replace(/[^a-z0-9_]/g, '_');
-      const poiInput = document.getElementById('poi_id');
-      if (poiInput) poiInput.value = cleanSlug ? 'poi_' + cleanSlug : '';
-      
-      const arrId = cleanSlug ? 'aud_' + cleanSlug + '_ko_arrival' : 'aud_{slug}_ko_arrival';
-      const mainId = cleanSlug ? 'aud_' + cleanSlug + '_ko_main' : 'aud_{slug}_ko_main';
-      
-      const elArrMeta = document.getElementById('aud_arrival_meta');
-      const elMainMeta = document.getElementById('aud_main_meta');
-      if (elArrMeta) elArrMeta.innerText = 'ID: ' + arrId + ' | audio/' + arrId + '.mp3';
-      if (elMainMeta) elMainMeta.innerText = 'ID: ' + mainId + ' | audio/' + mainId + '.mp3';
-    }
-
-    function handleEnglishNameInput(engVal) {
-      const currentSlug = document.getElementById('slug').value;
-      if (!currentSlug || currentSlug === '') {
-        const autoSlug = (engVal || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-        if (autoSlug) {
-          document.getElementById('slug').value = autoSlug;
-          handleSlugChange(autoSlug);
-        }
-      }
-    }
-
-    // 3. 인메모리 5대 마스터 DB 스토어 (v4.0 규격 보존)
-    let masterDB = {
-      POIs: [],
-      Audios: [],
-      Media: [],
-      Tours: [
-        {
-          tour_id: "tour_walk_melbourne_highlights_ko",
-          travel_mode: "walk",
-          title: "멜버른 시티 하이라이트 도보 투어",
-          estimated_min: 120,
-          distance_km: 3.5,
-          route_file: "routes/tour_walk_melbourne_highlights_ko.geojson"
-        }
-      ],
-      Tour_Stops: []
-    };
-
-    // 4. Leaflet 맵 & 지오펜스 오버레이 (멜버른 중심부 기본 초기화 및 드래그 인터랙션)
-    let map = null, mainMarker = null;
-    const gateLayers = {
-      1: { circle: null, marker: null },
-      2: { circle: null, marker: null },
-      3: { circle: null, marker: null }
-    };
-    const gateColors = { 1: '#1a73e8', 2: '#34a853', 3: '#e37400' };
-
-    function initMap() {
-      try {
-        const mapEl = document.getElementById('map');
-        if (!mapEl) return;
-
-        const initLat = -37.8180;
-        const initLng = 144.9671;
-
-        const osmFranceLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-          maxZoom: 20,
-          attribution: '&copy; OpenStreetMap France | &copy; OpenStreetMap'
-        });
-
-        map = L.map('map', {
-          center: [initLat, initLng],
-          zoom: 16,
-          layers: [osmFranceLayer]
-        });
-
-      } catch (e) {
-        console.error("Map initialization error:", e);
-      }
-    }
-
-    function setupGateVisual(gateNum, lat, lng, radius) {
-      if (!map) return;
-      if (gateLayers[gateNum].circle) map.removeLayer(gateLayers[gateNum].circle);
-      if (gateLayers[gateNum].marker) map.removeLayer(gateLayers[gateNum].marker);
-
-      if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
-
-      const circle = L.circle([lat, lng], {
-        color: gateColors[gateNum],
-        fillColor: gateColors[gateNum],
-        fillOpacity: 0.22,
-        weight: 2,
-        radius: radius || 20
-      }).addTo(map);
-
-      const gateMarker = L.marker([lat, lng], {
-        draggable: true,
-        title: "Gate " + gateNum + " (수정/신규 모드 시 드래그 가능)",
-        icon: L.divIcon({
-          className: 'custom-gate-pin',
-          html: '<div style="width: 14px; height: 14px; background: ' + gateColors[gateNum] + '; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 6px rgba(0,0,0,0.5); cursor: grab;"></div>',
-          iconSize: [14, 14],
-          iconAnchor: [7, 7]
-        })
-      }).addTo(map);
-
-      gateMarker.on('dragend', function (e) {
-        if (isEditLocked) {
-          alert("수정 모드가 잠겨있어 좌표를 변경할 수 없습니다. 상단에서 [신규 등록 모드]를 누르거나 [수정 모드]를 활성화해 주세요.");
-          updateGateFromInputs(gateNum);
-          return;
-        }
-        const pos = e.target.getLatLng();
-        document.getElementById('gate_' + gateNum + '_lat').value = pos.lat.toFixed(6);
-        document.getElementById('gate_' + gateNum + '_lng').value = pos.lng.toFixed(6);
-        if (gateLayers[gateNum].circle) {
-          gateLayers[gateNum].circle.setLatLng(pos);
-        }
-      });
-
-      gateLayers[gateNum].circle = circle;
-      gateLayers[gateNum].marker = gateMarker;
-    }
-
-    function updatePinFromInputs() {
-      if (!map) return;
-      const lat = parseFloat(document.getElementById('lat').value);
-      const lng = parseFloat(document.getElementById('lng').value);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        if (!mainMarker) {
-          mainMarker = L.marker([lat, lng], { draggable: true, title: "대표 POI 좌표" }).addTo(map);
-          mainMarker.on('dragend', function (e) {
-            if (isEditLocked) {
-              alert("수정 모드가 잠겨있어 대표 좌표를 변경할 수 없습니다.");
-              updatePinFromInputs();
-              return;
-            }
-            const pos = e.target.getLatLng();
-            document.getElementById('lat').value = pos.lat.toFixed(6);
-            document.getElementById('lng').value = pos.lng.toFixed(6);
-          });
-        } else {
-          mainMarker.setLatLng([lat, lng]);
-        }
-        map.panTo([lat, lng]);
-      } else {
-        if (mainMarker) {
-          map.removeLayer(mainMarker);
-          mainMarker = null;
-        }
-      }
-    }
-
-    function updateGateFromInputs(num) {
-      if (!map) return;
-      const lat = parseFloat(document.getElementById('gate_' + num + '_lat').value);
-      const lng = parseFloat(document.getElementById('gate_' + num + '_lng').value);
-      const radius = parseFloat(document.getElementById('gate_' + num + '_radius').value) || 20;
-
-      if (!isNaN(lat) && !isNaN(lng)) {
-        setupGateVisual(num, lat, lng, radius);
-      } else {
-        if (gateLayers[num].circle) map.removeLayer(gateLayers[num].circle);
-        if (gateLayers[num].marker) map.removeLayer(gateLayers[num].marker);
-        gateLayers[num].circle = null;
-        gateLayers[num].marker = null;
-      }
-    }
-
-    function toggleGateInputs(checked) {
-      [1, 2, 3].forEach(function(num) {
-        const wrap = document.getElementById('gate_' + num + '_wrapper');
-        if (wrap) wrap.style.opacity = checked ? '1' : '0.4';
-      });
-    }
-
-    // 5. 신규 등록 모드 진입 (빈 폼 개방 및 즉시 수정 가능)
-    function enterNewRegistrationMode() {
-      document.getElementById('saved_poi_selector').value = '';
-      resetFormToNew();
-
-      isEditLocked = false; // 신규 등록은 즉시 입력 가능하도록 잠금 해제
-      const btn = document.getElementById('btn_toggle_edit');
-      btn.innerHTML = "🔓 수정 모드 (활성화됨)";
-      btn.style.borderColor = "#188038";
-      btn.style.color = "#188038";
-
-      const inputs = document.querySelectorAll('.form-panel input, .form-panel textarea, .form-panel select');
-      inputs.forEach(function(el) {
-        if (el.id !== 'poi_id' && el.id !== 'slug' && el.id !== 'saved_poi_selector') {
-          if (el.tagName === 'SELECT') el.disabled = false;
-          else el.readOnly = false;
-        }
-      });
-      alert("➕ 신규 등록 모드가 활성화되었습니다.\n명칭(영어/한국어)을 입력하시고 [✨ AI 자동완성]을 누르거나 직접 입력해 주세요.");
-    }
-
-    function resetFormToNew() {
-      document.getElementById('name_en').value = '';
-      document.getElementById('name_ko').value = '';
-      document.getElementById('slug').value = '';
-      document.getElementById('poi_id').value = '';
-      document.getElementById('category').value = 'history';
-      document.getElementById('visit_minutes').value = 20;
-      document.getElementById('status').value = 'draft';
-      document.getElementById('lat').value = '';
-      document.getElementById('lng').value = '';
-
-      document.getElementById('has_gate').checked = true;
-      toggleGateInputs(true);
-      document.getElementById('gate_1_lat').value = '';
-      document.getElementById('gate_1_lng').value = '';
-      document.getElementById('gate_1_radius').value = 20;
-      document.getElementById('gate_2_lat').value = '';
-      document.getElementById('gate_2_lng').value = '';
-      document.getElementById('gate_2_radius').value = 20;
-      document.getElementById('gate_3_lat').value = '';
-      document.getElementById('gate_3_lng').value = '';
-      document.getElementById('gate_3_radius').value = 20;
-
-      document.getElementById('story_summary').value = '';
-      document.getElementById('guide_tips').value = '';
-      document.getElementById('admin_notes').value = '';
-      document.getElementById('aud_arrival_script').value = '';
-      document.getElementById('aud_main_script').value = '';
-
-      handleSlugChange('');
-      updateSpeechCalc('ko', '', 'arrival_calc');
-      updateSpeechCalc('ko', '', 'main_calc');
-
-      if (map) {
-        if (mainMarker) {
-          map.removeLayer(mainMarker);
-          mainMarker = null;
-        }
-        [1, 2, 3].forEach(function(num) {
-          if (gateLayers[num].circle) map.removeLayer(gateLayers[num].circle);
-          if (gateLayers[num].marker) map.removeLayer(gateLayers[num].marker);
-          gateLayers[num].circle = null;
-          gateLayers[num].marker = null;
-        });
-      }
-    }
-
-    // 6. API Key 안전 관리
-    function configureApiKey() {
-      const currentKey = localStorage.getItem('GEMINI_API_KEY') || '';
-      const inputKey = prompt(
-        "Google Gemini API Key를 입력해주세요:\n\n* 브라우저(localStorage)에만 안전하게 보관되며 GitHub에 커밋되지 않습니다.",
-        currentKey
-      );
-      if (inputKey !== null) {
-        const trimmed = inputKey.trim();
-        if (trimmed) {
-          localStorage.setItem('GEMINI_API_KEY', trimmed);
-          alert("Gemini API Key가 안전하게 저장되었습니다.");
-        } else {
-          localStorage.removeItem('GEMINI_API_KEY');
-          alert("API Key가 삭제되었습니다.");
-        }
-      }
-    }
-
-    // 7. 실시간 Gemini API 통신 엔진 (유료 티어 연동 + AI 자동완성)
-    async function generateWithGemini() {
-      const apiKey = localStorage.getItem('GEMINI_API_KEY');
-      if (!apiKey) {
-        alert("Gemini API Key가 등록되지 않았습니다.\n먼저 상단의 [🔑 API Key 설정] 버튼을 눌러 유료 티어 API 키를 1회 등록해 주세요.");
-        configureApiKey();
-        return;
-      }
-
-      if (isEditLocked) {
-        alert("AI 자동 완성 결과를 반영하려면 먼저 [신규 등록 모드]를 누르거나 [수정 모드]를 활성화해 주세요.");
-        return;
-      }
-
-      const nameEn = document.getElementById('name_en').value.trim();
-      const nameKo = document.getElementById('name_ko').value.trim();
-
-      if (!nameEn && !nameKo) {
-        alert("검색할 명소 명칭을 입력해 주세요.\n(정확도를 위해 [명소 명칭(영어)] 입력을 권장합니다. 예: State Library Victoria, Puffing Billy Railway)");
-        document.getElementById('name_en').focus();
-        return;
-      }
-
-      const primaryQuery = nameEn || nameKo;
-      const secondaryQuery = nameEn && nameKo ? " (한국어명: " + nameKo + ")" : "";
-
-      const btn = document.getElementById('btn_ai_generate');
-      const originalHtml = btn.innerHTML;
-      btn.innerHTML = "⏳ Gemini 실시간 검색 중...";
-      btn.disabled = true;
-
-      try {
-        const systemPrompt = "당신은 호주 빅토리아주 및 멜버른 전문 오디오 투어 가이드 플랫폼의 수석 테크니컬 아키텍트입니다.\n" +
-          "검색 대상 명소: \"" + primaryQuery + "\"" + secondaryQuery + "\n\n" +
-          "[지시사항]:\n" +
-          "1. 호주 멜버른 및 빅토리아주의 공식 영문 명칭을 바탕으로 실제 명소의 지리/역사 정보를 정밀 조회하세요.\n" +
-          "2. 마스터 스키마 v4.0 규격을 100% 엄격히 준수하여 완전한 단일 JSON 객체로만 응답하세요.\n" +
-          "3. 마크다운 백틱 없이 순수 JSON 문자열만 출력하세요.\n" +
-          "4. lat, lng는 멜버른 현장의 실제 정밀 GPS 좌표(-37.xxxxxx, 144.xxxxxx)여야 합니다.\n" +
-          "5. arrival_script는 현장에 막 도착한 관광객의 시선을 특정 건축물/경관 요소로 이끄는 1~2문장의 생생한 구어체 멘트여야 합니다.\n" +
-          "6. main_script는 100년 전 역사와 현장 비하인드 스토리를 담은 품격 있는 구어체 오디오 해설(공백제외 350~450자)이어야 합니다.\n\n" +
-          "[JSON 포맷]:\n" +
-          "{\n" +
-          "  \"slug\": \"영문_소문자_스네이크\",\n" +
-          "  \"name_ko\": \"한국어 명칭\",\n" +
-          "  \"name_en\": \"영어 공식 명칭\",\n" +
-          "  \"lat\": 위도_실수,\n" +
-          "  \"lng\": 경도_실수,\n" +
-          "  \"category\": \"history, nature, culture, scenic 중 택1\",\n" +
-          "  \"visit_minutes\": 권장체류_정수,\n" +
-          "  \"has_gate\": true,\n" +
-          "  \"gate_1_lat\": 주진입로_위도,\n" +
-          "  \"gate_1_lng\": 주진입로_경도,\n" +
-          "  \"gate_1_radius\": 20,\n" +
-          "  \"gate_2_lat\": 보조진입로_위도_또는_null,\n" +
-          "  \"gate_2_lng\": 보조진입로_경도_또는_null,\n" +
-          "  \"gate_2_radius\": 20,\n" +
-          "  \"gate_3_lat\": 광장교차점_위도_또는_null,\n" +
-          "  \"gate_3_lng\": 광장교차점_경도_또는_null,\n" +
-          "  \"gate_3_radius\": 20,\n" +
-          "  \"story_summary\": \"배경 역사 요약 3~4줄\",\n" +
-          "  \"guide_tips\": \"현장 꿀팁 및 포토존 시선 유도\",\n" +
-          "  \"admin_notes\": \"주차, 안전, 인솔 메모 (비공개)\",\n" +
-          "  \"arrival_script\": \"도착 안내 구어체 대본\",\n" +
-          "  \"main_script\": \"본해설 구어체 대본\"\n" +
-          "}";
-
-        const candidateModels = [
-          'gemini-3.6-flash',
-          'gemini-3.5-flash-lite',
-          'gemini-2.5-flash'
-        ];
-        let response = null;
-        let lastError = null;
-
-        for (let i = 0; i < candidateModels.length; i++) {
-          const model = candidateModels[i];
-          try {
-            response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'x-goog-api-key': apiKey
-              },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }],
-                generationConfig: {
-                  temperature: 0.2,
-                  responseMimeType: "application/json"
-                }
-              })
-            });
-
-            if (response.ok) break;
-            const errJson = await response.json();
-            lastError = errJson.error ? errJson.error.message : ("HTTP " + response.status);
-            console.warn(`[${model}] 호출 실패, 다음 가용 모델로 자동 전환합니다:`, lastError);
-          } catch (e) {
-            lastError = e.message;
-          }
-        }
-
-        if (!response || !response.ok) {
-          throw new Error(lastError || "모든 Gemini 가용 모델 호출에 실패했습니다. API Key를 확인해 주세요.");
-        }
-
-        const resData = await response.json();
-        const rawJson = resData.candidates[0].content.parts[0].text;
-        const aiData = JSON.parse(rawJson);
-
-        document.getElementById('slug').value = aiData.slug || '';
-        handleSlugChange(aiData.slug || '');
-
-        document.getElementById('name_en').value = aiData.name_en || '';
-        document.getElementById('name_ko').value = aiData.name_ko || '';
-        document.getElementById('lat').value = aiData.lat || '';
-        document.getElementById('lng').value = aiData.lng || '';
-        document.getElementById('category').value = aiData.category || 'history';
-        document.getElementById('visit_minutes').value = aiData.visit_minutes || 20;
-        document.getElementById('has_gate').checked = Boolean(aiData.has_gate);
-
-        document.getElementById('gate_1_lat').value = aiData.gate_1_lat || aiData.lat || '';
-        document.getElementById('gate_1_lng').value = aiData.gate_1_lng || aiData.lng || '';
-        document.getElementById('gate_1_radius').value = aiData.gate_1_radius || 20;
-
-        document.getElementById('gate_2_lat').value = aiData.gate_2_lat || '';
-        document.getElementById('gate_2_lng').value = aiData.gate_2_lng || '';
-        document.getElementById('gate_2_radius').value = aiData.gate_2_radius || 20;
-
-        document.getElementById('gate_3_lat').value = aiData.gate_3_lat || '';
-        document.getElementById('gate_3_lng').value = aiData.gate_3_lng || '';
-        document.getElementById('gate_3_radius').value = aiData.gate_3_radius || 20;
-
-        document.getElementById('story_summary').value = aiData.story_summary || '';
-        document.getElementById('guide_tips').value = aiData.guide_tips || '';
-        document.getElementById('admin_notes').value = aiData.admin_notes || '';
-
-        document.getElementById('aud_arrival_script').value = aiData.arrival_script || '';
-        document.getElementById('aud_main_script').value = aiData.main_script || '';
-
-        updateSpeechCalc('ko', aiData.arrival_script || '', 'arrival_calc');
-        updateSpeechCalc('ko', aiData.main_script || '', 'main_calc');
-        updatePinFromInputs();
-        updateGateFromInputs(1);
-        updateGateFromInputs(2);
-        updateGateFromInputs(3);
-
-        alert("[" + (aiData.name_en || aiData.name_ko) + "] AI 자동완성 완료!\n\n💡 팁: 검토 후 [저장] 버튼을 눌러 마스터 DB에 등록해 주세요.");
-      } catch (err) {
-        console.error("Gemini Error:", err);
-        alert("Gemini 호출 실패: " + err.message);
-      } finally {
-        btn.innerHTML = originalHtml;
-        btn.disabled = false;
-      }
-    }
-
-    // 8. POI 저장 (v4.0 스키마 정합성 보장 및 중복 방지 덮어쓰기 로직 적용)
-    function saveCurrentPoi() {
-      if (isEditLocked) {
-        alert("저장을 수행하려면 먼저 [신규 등록 모드]를 누르거나 [수정 모드]를 활성화해 주세요.");
-        return;
-      }
-
-      const slug = document.getElementById('slug').value.trim();
-      if (!slug) {
-        alert('Slug는 필수 입력값입니다. (명소 명칭을 입력하거나 직접 입력해 주세요)');
-        return;
-      }
-
-      const poi_id = document.getElementById('poi_id').value;
-      const nameKo = document.getElementById('name_ko').value.trim();
-      const nameEn = document.getElementById('name_en').value.trim();
-      const now = new Date().toISOString();
-
-      // [중복 방지 검사]: 동일한 poi_id 또는 동일한 명칭(한글/영어)을 가진 기존 POI가 있는지 확인
-      const existingIndex = masterDB.POIs.findIndex(function(p) {
-        return p.poi_id === poi_id || 
-               (nameKo && p.name_ko === nameKo) || 
-               (nameEn && p.name_en && p.name_en.toLowerCase() === nameEn.toLowerCase());
-      });
-
-      const targetPoiId = existingIndex !== -1 ? masterDB.POIs[existingIndex].poi_id : poi_id;
-
-      const poiRecord = {
-        poi_id: targetPoiId,
-        name_ko: nameKo,
-        name_en: nameEn,
-        lat: parseFloat(document.getElementById('lat').value),
-        lng: parseFloat(document.getElementById('lng').value),
-        category: document.getElementById('category').value,
-        visit_minutes: parseInt(document.getElementById('visit_minutes').value, 10),
-        has_gate: document.getElementById('has_gate').checked,
-        gate_1_lat: parseFloat(document.getElementById('gate_1_lat').value) || null,
-        gate_1_lng: parseFloat(document.getElementById('gate_1_lng').value) || null,
-        gate_1_radius: parseFloat(document.getElementById('gate_1_radius').value) || null,
-        gate_2_lat: parseFloat(document.getElementById('gate_2_lat').value) || null,
-        gate_2_lng: parseFloat(document.getElementById('gate_2_lng').value) || null,
-        gate_2_radius: parseFloat(document.getElementById('gate_2_radius').value) || null,
-        gate_3_lat: parseFloat(document.getElementById('gate_3_lat').value) || null,
-        gate_3_lng: parseFloat(document.getElementById('gate_3_lng').value) || null,
-        gate_3_radius: parseFloat(document.getElementById('gate_3_radius').value) || null,
-        story_summary: document.getElementById('story_summary').value,
-        guide_tips: document.getElementById('guide_tips').value,
-        admin_notes: document.getElementById('admin_notes').value,
-        status: document.getElementById('status').value,
-        updated_at: now
-      };
-
-      const cleanSlug = targetPoiId.replace('poi_', '');
-      const arrivalScript = document.getElementById('aud_arrival_script').value;
-      const mainScript = document.getElementById('aud_main_script').value;
-      
-      const arrivalCalc = calculateSpeechDuration(arrivalScript, 'ko');
-      const mainCalc = calculateSpeechDuration(mainScript, 'ko');
-
-      const audioArrival = {
-        audio_id: 'aud_' + cleanSlug + '_ko_arrival',
-        poi_id: targetPoiId,
-        tour_id: null,
-        lang: 'ko',
-        segment: 'arrival',
-        title: poiRecord.name_ko + ' 도착 안내',
-        script: arrivalScript,
-        duration_sec: arrivalCalc.seconds,
-        file_path: 'audio/aud_' + cleanSlug + '_ko_arrival.mp3',
-        script_updated_at: now,
-        status: 'draft'
-      };
-
-      const audioMain = {
-        audio_id: 'aud_' + cleanSlug + '_ko_main',
-        poi_id: targetPoiId,
-        tour_id: null,
-        lang: 'ko',
-        segment: 'main',
-        title: poiRecord.name_ko + ' 본해설',
-        script: mainScript,
-        duration_sec: mainCalc.seconds,
-        file_path: 'audio/aud_' + cleanSlug + '_ko_main.mp3',
-        script_updated_at: now,
-        status: 'draft'
-      };
-
-      masterDB.POIs = masterDB.POIs.filter(function(p) { return p.poi_id !== targetPoiId; });
-      masterDB.POIs.push(poiRecord);
-
-      masterDB.Audios = masterDB.Audios.filter(function(a) { return a.poi_id !== targetPoiId; });
-      masterDB.Audios.push(audioArrival, audioMain);
-
-      try {
-        localStorage.setItem('MASTER_CMS_BACKUP', JSON.stringify(masterDB));
-      } catch (e) {
-        console.warn("Storage quota warning:", e);
-      }
-
-      updatePoiSelector();
-      document.getElementById('saved_poi_selector').value = targetPoiId;
-      
-      // 저장 완료 후 다시 안전하게 잠금 모드로 전환
-      if (!isEditLocked) toggleEditMode();
-      alert("[" + (poiRecord.name_en || poiRecord.name_ko) + "] 마스터 DB 저장 및 안전 잠금 완료!\n(현재 보관 중인 POI: " + masterDB.POIs.length + "개)");
-    }
-
-    // 8.1. 현재 선택된 POI 독립 삭제 함수
-    function deleteCurrentPoi() {
-      const poiId = document.getElementById('poi_id').value;
-      if (!poiId || masterDB.POIs.length === 0) {
-        alert("삭제할 대상 POI가 선택되지 않았습니다.");
-        return;
-      }
-
-      const targetPoi = masterDB.POIs.find(function(p) { return p.poi_id === poiId; });
-      const targetName = targetPoi ? (targetPoi.name_en || targetPoi.name_ko) : poiId;
-
-      if (confirm("⚠️ [안전 삭제 확인]\n[" + targetName + "] 명소와 연계된 오디오 대본을 마스터 DB에서 완전히 삭제하시겠습니까?")) {
-        masterDB.POIs = masterDB.POIs.filter(function(p) { return p.poi_id !== poiId; });
-        masterDB.Audios = masterDB.Audios.filter(function(a) { return a.poi_id !== poiId; });
-
-        try {
-          localStorage.setItem('MASTER_CMS_BACKUP', JSON.stringify(masterDB));
-        } catch(e) {}
-
-        updatePoiSelector();
-        resetFormToNew();
-        if (!isEditLocked) toggleEditMode();
-        alert("해당 POI가 성공적으로 삭제되었습니다.");
-      }
-    }
-
-    // 9. JSON 불러오기 & 목록 동기화
-    function handleImportFile(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const imported = JSON.parse(e.target.result);
-          if (!imported.POIs || !imported.Audios) {
-            throw new Error("유효한 마스터 스키마 파일이 아닙니다. (POIs 또는 Audios 누락)");
-          }
-
-          masterDB = imported;
-          try {
-            localStorage.setItem('MASTER_CMS_BACKUP', JSON.stringify(masterDB));
-          } catch(err) {}
-          
-          updatePoiSelector();
-          alert("마스터 JSON을 성공적으로 불러왔습니다!\n- POI: " + masterDB.POIs.length + "개\n- Audios: " + masterDB.Audios.length + "개");
-          
-          if (masterDB.POIs.length > 0) {
-            loadPoiIntoForm(masterDB.POIs[0].poi_id);
-          }
-        } catch (err) {
-          alert("불러오기 실패: " + err.message);
-        }
-      };
-      reader.readAsText(file);
-      event.target.value = '';
-    }
-
-    function updatePoiSelector() {
-      const sel = document.getElementById('saved_poi_selector');
-      if (!sel) return;
-      sel.innerHTML = '<option value="">-- 수정할 명소를 선택하세요 --</option>';
-      masterDB.POIs.forEach(function(p) {
-        const opt = document.createElement('option');
-        opt.value = p.poi_id;
-        opt.textContent = (p.name_en ? p.name_en + ' / ' : '') + p.name_ko + ' (' + p.poi_id + ')';
-        sel.appendChild(opt);
-      });
-      const badge = document.getElementById('poi_count_badge');
-      if (badge) badge.innerText = masterDB.POIs.length;
-    }
-
-    function loadPoiIntoForm(poi_id) {
-      if (!poi_id) return;
-      const poi = masterDB.POIs.find(function(p) { return p.poi_id === poi_id; });
-      if (!poi) return;
-
-      const slug = poi.poi_id.replace('poi_', '');
-      document.getElementById('slug').value = slug;
-      handleSlugChange(slug);
-
-      document.getElementById('name_en').value = poi.name_en || '';
-      document.getElementById('name_ko').value = poi.name_ko || '';
-      document.getElementById('lat').value = poi.lat;
-      document.getElementById('lng').value = poi.lng;
-      document.getElementById('category').value = poi.category || 'history';
-      document.getElementById('visit_minutes').value = poi.visit_minutes || 20;
-      document.getElementById('status').value = poi.status || 'draft';
-      document.getElementById('has_gate').checked = Boolean(poi.has_gate);
-
-      document.getElementById('gate_1_lat').value = poi.gate_1_lat || '';
-      document.getElementById('gate_1_lng').value = poi.gate_1_lng || '';
-      document.getElementById('gate_1_radius').value = poi.gate_1_radius || 20;
-      document.getElementById('gate_2_lat').value = poi.gate_2_lat || '';
-      document.getElementById('gate_2_lng').value = poi.gate_2_lng || '';
-      document.getElementById('gate_2_radius').value = poi.gate_2_radius || 20;
-      document.getElementById('gate_3_lat').value = poi.gate_3_lat || '';
-      document.getElementById('gate_3_lng').value = poi.gate_3_lng || '';
-      document.getElementById('gate_3_radius').value = poi.gate_3_radius || 20;
-
-      document.getElementById('story_summary').value = poi.story_summary || '';
-      document.getElementById('guide_tips').value = poi.guide_tips || '';
-      document.getElementById('admin_notes').value = poi.admin_notes || '';
-
-      const arrAudio = masterDB.Audios.find(function(a) { return a.poi_id === poi_id && a.segment === 'arrival'; });
-      const mainAudio = masterDB.Audios.find(function(a) { return a.poi_id === poi_id && a.segment === 'main'; });
-
-      document.getElementById('aud_arrival_script').value = arrAudio ? arrAudio.script : '';
-      document.getElementById('aud_main_script').value = mainAudio ? mainAudio.script : '';
-
-      updateSpeechCalc('ko', arrAudio ? arrAudio.script : '', 'arrival_calc');
-      updateSpeechCalc('ko', mainAudio ? mainAudio.script : '', 'main_calc');
-
-      updatePinFromInputs();
-      updateGateFromInputs(1);
-      updateGateFromInputs(2);
-      updateGateFromInputs(3);
-    }
-
-    // 10. 성우/TTS 큐시트 CSV 내보내기
-    function exportCueSheetCSV() {
-      if (masterDB.Audios.length === 0) {
-        alert('내보낼 오디오 데이터가 없습니다. 먼저 POI 저장을 완료해주세요.');
-        return;
-      }
-
-      let csv = "\uFEFF순번,오디오 ID,유형(Segment),언어,제목,예상초,오디오 파일경로,스크립트(대본)\n";
-      const order = { 'greeting': 1, 'arrival': 2, 'main': 3, 'sub': 4, 'departure': 5, 'nav_turn': 6, 'closing': 7 };
-      const sortedAudios = [...masterDB.Audios].sort(function(a, b) {
-        return (order[a.segment] || 99) - (order[b.segment] || 99);
-      });
-
-      sortedAudios.forEach(function(item, index) {
-        const calc = calculateSpeechDuration(item.script, item.lang);
-        const cleanScript = '"' + item.script.replace(/"/g, '""') + '"';
-        csv += (index + 1) + ',' + item.audio_id + ',' + item.segment + ',' + item.lang + ',"' + item.title + '",' + calc.seconds + ',' + item.file_path + ',' + cleanScript + '\n';
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', 'cuesheet_export_' + Date.now() + '.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    // 11. 마스터 JSON 내보내기
-    function exportMasterJSON() {
-      if (masterDB.POIs.length === 0) {
-        alert('내보낼 마스터 데이터가 없습니다. 먼저 [저장]을 실행해 주세요.');
-        return;
-      }
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(masterDB, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", 'master_schema_v4_' + Date.now() + '.json');
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    }
-
-    // 12. DOM 로드 완료 후 리스너 안전 바인딩 (최초 실행 시 빈 폼 유지 및 잠금 상태 적용)
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('btn_config_key').addEventListener('click', configureApiKey);
-      document.getElementById('btn_ai_generate').addEventListener('click', generateWithGemini);
-      document.getElementById('btn_export_csv').addEventListener('click', exportCueSheetCSV);
-      document.getElementById('btn_import_json').addEventListener('click', function() {
-        document.getElementById('import_file_input').click();
-      });
-      document.getElementById('import_file_input').addEventListener('change', handleImportFile);
-      document.getElementById('btn_export_json').addEventListener('click', exportMasterJSON);
-      
-      // 폼 상단 액션 바 핵심 버튼 리스너 바인딩
-      document.getElementById('btn_new_registration').addEventListener('click', enterNewRegistrationMode);
-      document.getElementById('btn_toggle_edit').addEventListener('click', toggleEditMode);
-      document.getElementById('btn_delete_poi').addEventListener('click', deleteCurrentPoi);
-      document.getElementById('btn_save_poi').addEventListener('click', saveCurrentPoi);
-
-      document.getElementById('saved_poi_selector').addEventListener('change', function() {
-        if (this.value) {
-          loadPoiIntoForm(this.value);
-          if (!isEditLocked) toggleEditMode(); // 목록 선택 시 기본 잠금 처리
-        } else {
-          resetFormToNew();
-        }
-      });
-
-      document.getElementById('name_en').addEventListener('input', function() {
-        handleEnglishNameInput(this.value);
-      });
-      document.getElementById('slug').addEventListener('input', function() {
-        handleSlugChange(this.value);
-      });
-      document.getElementById('lat').addEventListener('input', updatePinFromInputs);
-      document.getElementById('lng').addEventListener('input', updatePinFromInputs);
-      document.getElementById('has_gate').addEventListener('change', function() {
-        toggleGateInputs(this.checked);
-      });
-
-      [1, 2, 3].forEach(function(num) {
-        document.getElementById('gate_' + num + '_lat').addEventListener('input', function() { updateGateFromInputs(num); });
-        document.getElementById('gate_' + num + '_lng').addEventListener('input', function() { updateGateFromInputs(num); });
-        document.getElementById('gate_' + num + '_radius').addEventListener('input', function() { updateGateFromInputs(num); });
-      });
-
-      document.getElementById('aud_arrival_script').addEventListener('input', function() {
-        updateSpeechCalc('ko', this.value, 'arrival_calc');
-      });
-      document.getElementById('aud_main_script').addEventListener('input', function() {
-        updateSpeechCalc('ko', this.value, 'main_calc');
-      });
-
-      try {
-        const autoBackup = localStorage.getItem('MASTER_CMS_BACKUP');
-        if (autoBackup) {
-          masterDB = JSON.parse(autoBackup);
-          updatePoiSelector();
-        }
-      } catch(e) {
-        console.error("Backup load error:", e);
-      }
-
-      handleSlugChange('');
-      updateSpeechCalc('ko', '', 'arrival_calc');
-      updateSpeechCalc('ko', '', 'main_calc');
-      
-      initMap();
-    });
-  </script>
+  <!-- Modular Scripts -->
+  <script src="js/schema.js"></script>
+  <script src="js/map-engine.js"></script>
+  <script src="js/ai-engine.js"></script>
+  <script src="js/cms-controller.js"></script>
 </body>
 </html>
