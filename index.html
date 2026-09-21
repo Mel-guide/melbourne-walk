@@ -125,10 +125,10 @@
           <option value="">-- 수정할 명소를 선택하세요 --</option>
         </select>
         
-        <!-- 통합 액션 버튼 바 (AI 자동완성, 수정 잠금해제, 삭제, 저장) -->
+        <!-- 통합 액션 버튼 바 (AI 자동완성, 수정 모드, 삭제, 저장) -->
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; border-top: 1px solid #d2e3fc; padding-top: 10px;">
           <button type="button" class="btn btn-ai" id="btn_ai_generate" style="justify-content: center; font-size: 0.78rem;" title="명칭 입력 후 AI 초안 생성">✨ AI 자동완성</button>
-          <button type="button" class="btn btn-outline" id="btn_toggle_edit" style="border-color: #f9ab00; color: #b78103; font-weight: 700; justify-content: center; font-size: 0.78rem;" title="선택한 POI 수정 잠금 해제">🔒 수정 잠금</button>
+          <button type="button" class="btn btn-outline" id="btn_toggle_edit" style="border-color: #f9ab00; color: #b78103; font-weight: 700; justify-content: center; font-size: 0.78rem;" title="선택한 POI 수정 모드 전환">🔒 수정 모드</button>
           <button type="button" class="btn btn-danger" id="btn_delete_poi" style="justify-content: center; font-size: 0.78rem;">🗑️ 삭제</button>
           <button type="button" class="btn btn-primary" id="btn_save_poi" style="justify-content: center; font-size: 0.78rem;">💾 저장</button>
         </div>
@@ -332,7 +332,7 @@
 
       <div class="action-bar">
         <div style="font-size: 0.8rem; color: var(--text-muted);">
-          💡 <strong>맵 조작 가이드</strong>: <strong>[신규 등록 모드]</strong> 또는 <strong>[수정 잠금 해제]</strong> 시 대표 마커와 Gate 1~3 핀을 드래그하여 위치를 수정할 수 있습니다.
+          💡 <strong>맵 조작 가이드</strong>: <strong>[신규 등록 모드]</strong> 또는 <strong>[수정 모드]</strong> 활성화 시 대표 마커와 Gate 1~3 핀을 드래그하여 위치를 수정할 수 있습니다.
         </div>
       </div>
     </div>
@@ -372,15 +372,15 @@
       });
 
       if (isEditLocked) {
-        btn.innerHTML = "🔒 수정 모드 (잠김)";
+        btn.innerHTML = "🔒 수정 모드";
         btn.style.borderColor = "#f9ab00";
         btn.style.color = "#b78103";
-        alert("안전 모드: 선택한 POI의 수정이 잠겼습니다.");
+        alert("🔒 안전 모드: 수정이 잠겼습니다. 데이터가 보호됩니다.");
       } else {
-        btn.innerHTML = "🔓 수정 모드 (열림)";
+        btn.innerHTML = "🔓 수정 모드 (활성화됨)";
         btn.style.borderColor = "#188038";
         btn.style.color = "#188038";
-        alert("수정 모드가 활성화되었습니다. 내용을 변경한 뒤 [저장]을 눌러주세요.");
+        alert("✏️ [수정 모드]가 활성화되었습니다. 이제 폼 내용을 수정하거나 지도에서 마커/게이트 핀을 드래그하여 좌표를 변경할 수 있습니다.");
       }
     }
 
@@ -511,7 +511,7 @@
 
       gateMarker.on('dragend', function (e) {
         if (isEditLocked) {
-          alert("수정 모드가 잠겨있어 좌표를 변경할 수 없습니다. 상단에서 [신규 등록 모드]를 누르거나 [수정 잠금]을 해제해 주세요.");
+          alert("수정 모드가 잠겨있어 좌표를 변경할 수 없습니다. 상단에서 [신규 등록 모드]를 누르거나 [수정 모드]를 활성화해 주세요.");
           updateGateFromInputs(gateNum);
           return;
         }
@@ -586,7 +586,7 @@
 
       isEditLocked = false; // 신규 등록은 즉시 입력 가능하도록 잠금 해제
       const btn = document.getElementById('btn_toggle_edit');
-      btn.innerHTML = "🔓 신규 등록 (열림)";
+      btn.innerHTML = "🔓 수정 모드 (활성화됨)";
       btn.style.borderColor = "#188038";
       btn.style.color = "#188038";
 
@@ -676,7 +676,7 @@
       }
 
       if (isEditLocked) {
-        alert("AI 자동 완성 결과를 반영하려면 먼저 [신규 등록 모드]를 누르거나 [수정 잠금]을 해제해 주세요.");
+        alert("AI 자동 완성 결과를 반영하려면 먼저 [신규 등록 모드]를 누르거나 [수정 모드]를 활성화해 주세요.");
         return;
       }
 
@@ -826,7 +826,7 @@
     // 8. POI 저장 (v4.0 스키마 정합성 보장 및 중복 방지 덮어쓰기 로직 적용)
     function saveCurrentPoi() {
       if (isEditLocked) {
-        alert("저장을 수행하려면 먼저 [신규 등록 모드]를 누르거나 [수정 잠금]을 해제해 주세요.");
+        alert("저장을 수행하려면 먼저 [신규 등록 모드]를 누르거나 [수정 모드]를 활성화해 주세요.");
         return;
       }
 
