@@ -134,22 +134,22 @@
       <div class="grid-2">
         <div class="form-group">
           <label>명소 명칭 (영어: name_en) [AI 검색 기준 권장] *</label>
-          <input type="text" id="name_en" class="form-control" placeholder="예: State Library Victoria, Puffing Billy..." value="Flinders Street Railway Station">
+          <input type="text" id="name_en" class="form-control" placeholder="예: State Library Victoria, Puffing Billy...">
         </div>
         <div class="form-group">
           <label>명소 명칭 (한국어: name_ko) *</label>
-          <input type="text" id="name_ko" class="form-control" placeholder="예: 빅토리아 주립 도서관..." value="플린더스 스트리트 역">
+          <input type="text" id="name_ko" class="form-control" placeholder="예: 빅토리아 주립 도서관...">
         </div>
       </div>
       
       <div class="grid-2">
         <div class="form-group">
           <label>POI ID (자동 생성: poi_{slug}) *</label>
-          <input type="text" id="poi_id" class="form-control" readonly placeholder="poi_flinders_station" value="poi_flinders_station">
+          <input type="text" id="poi_id" class="form-control" readonly placeholder="poi_slug">
         </div>
         <div class="form-group">
           <label>Slug (소문자 스네이크 케이스) *</label>
-          <input type="text" id="slug" class="form-control" placeholder="flinders_station" value="flinders_station">
+          <input type="text" id="slug" class="form-control" placeholder="state_library_victoria">
         </div>
       </div>
 
@@ -170,8 +170,8 @@
         <div class="form-group">
           <label>배포 상태 (status)</label>
           <select id="status" class="form-control">
-            <option value="draft">draft</option>
-            <option value="ready" selected>ready</option>
+            <option value="draft" selected>draft</option>
+            <option value="ready">ready</option>
             <option value="published">published</option>
           </select>
         </div>
@@ -180,11 +180,11 @@
       <div class="grid-2">
         <div class="form-group">
           <label>대표 위도 (lat) *</label>
-          <input type="number" step="0.000001" id="lat" class="form-control" value="-37.8180">
+          <input type="number" step="0.000001" id="lat" class="form-control" placeholder="-37.xxxxxx">
         </div>
         <div class="form-group">
           <label>대표 경도 (lng) *</label>
-          <input type="number" step="0.000001" id="lng" class="form-control" value="144.9671">
+          <input type="number" step="0.000001" id="lng" class="form-control" placeholder="144.xxxxxx">
         </div>
       </div>
 
@@ -203,11 +203,11 @@
         <div class="grid-3">
           <div class="form-group">
             <label>Gate 1 Lat</label>
-            <input type="number" step="0.000001" id="gate_1_lat" class="form-control" value="-37.8178">
+            <input type="number" step="0.000001" id="gate_1_lat" class="form-control">
           </div>
           <div class="form-group">
             <label>Gate 1 Lng</label>
-            <input type="number" step="0.000001" id="gate_1_lng" class="form-control" value="144.9668">
+            <input type="number" step="0.000001" id="gate_1_lng" class="form-control">
           </div>
           <div class="form-group">
             <label>Radius (m)</label>
@@ -259,12 +259,12 @@
       
       <div class="form-group">
         <label>배경 역사 요약 (story_summary: 3~4줄)</label>
-        <textarea id="story_summary" class="form-control">1910년에 완공된 멜버른 최초의 기차역이자 도시를 상징하는 대표 랜드마크입니다. 웅장한 노란색 프렌치 르네상스 양식의 외벽과 청동 돔 지붕이 야라 강변과 조화를 이룹니다.</textarea>
+        <textarea id="story_summary" class="form-control" placeholder="명소의 역사적 배경과 핵심 스토리를 입력하세요..."></textarea>
       </div>
 
       <div class="form-group">
         <label>현장 꿀팁 & 포토존 (guide_tips: 시선 유도)</label>
-        <textarea id="guide_tips" class="form-control">시계탑 정면 대각선 방향인 세인트 폴 대성당 앞 계단에 서서 올려다볼 때 가장 웅장한 구도가 나옵니다. 트램이 지나가는 순간을 함께 포착해 보세요.</textarea>
+        <textarea id="guide_tips" class="form-control" placeholder="방문객을 위한 관람 팁 및 포토존 위치 안내..."></textarea>
       </div>
 
       <!-- 4. Audios 마스터 양방향 바인딩 대본 (Mono 96kbps MP3 표준 규격) -->
@@ -280,8 +280,8 @@
           <span class="speech-indicator" id="arrival_calc">0자 | 예상 0.0초</span>
         </div>
         <div class="form-group">
-          <div class="audio-meta" id="aud_arrival_meta">ID: aud_flinders_station_ko_arrival | audio/aud_flinders_station_ko_arrival.mp3</div>
-          <textarea id="aud_arrival_script" class="form-control" style="margin-top:6px;">멜버른의 심장, 플린더스 스트리트 역에 도착하셨습니다. 정면의 거대한 돔과 아치형 입구 아래 늘어선 클래식한 시계들을 올려다봐 주세요.</textarea>
+          <div class="audio-meta" id="aud_arrival_meta">ID: aud_{slug}_ko_arrival | audio/aud_{slug}_ko_arrival.mp3</div>
+          <textarea id="aud_arrival_script" class="form-control" style="margin-top:6px;" placeholder="명소에 도착했을 때 송출될 1~2문장의 구어체 안내 멘트..."></textarea>
         </div>
       </div>
 
@@ -292,8 +292,8 @@
           <span class="speech-indicator" id="main_calc">0자 | 예상 0.0초</span>
         </div>
         <div class="form-group">
-          <div class="audio-meta" id="aud_main_meta">ID: aud_flinders_station_ko_main | audio/aud_flinders_station_ko_main.mp3</div>
-          <textarea id="aud_main_script" class="form-control" style="min-height: 110px; margin-top:6px;">이 역의 시계탑 아래는 100년 넘게 멜버른 시민들의 대표 약속 장소였습니다. 'I'll meet you under the clocks'라는 유명한 관용구도 여기서 탄생했죠. 지금도 시계 다이얼들은 각 노선별 다음 열차 출발 시각을 아날로그 방식으로 표시하고 있습니다. 건축 당시 공모전을 통해 선정된 독창적인 디자인과 황금빛 벽돌의 조화를 천천히 감상해 보세요.</textarea>
+          <div class="audio-meta" id="aud_main_meta">ID: aud_{slug}_ko_main | audio/aud_{slug}_ko_main.mp3</div>
+          <textarea id="aud_main_script" class="form-control" style="min-height: 110px; margin-top:6px;" placeholder="본격적인 역사와 비하인드 스토리를 담은 오디오 해설 대본 (공백 제외 350~450자 권장)..."></textarea>
         </div>
       </div>
 
@@ -302,7 +302,7 @@
       <div class="admin-notes-card">
         <div class="form-group" style="margin-bottom: 0;">
           <label style="color: #b78103; font-weight:700;">인솔/주차/안전 메모 (번들 배포 시 고객 앱에서 자동 제외)</label>
-          <textarea id="admin_notes" class="form-control" style="margin-top:4px;">대형 투어 버스는 역 뒤편 야라 강변(Flinders Walk) 임시 정차 구역을 이용할 것. 출퇴근 시간대 보행자 혼잡도가 매우 높으므로 소매치기 주의 안내 필수.</textarea>
+          <textarea id="admin_notes" class="form-control" style="margin-top:4px;" placeholder="현장 인솔 시 주의할 점, 주차 위치, 안전 가이드 등 관리자 전용 메모..."></textarea>
         </div>
       </div>
 
@@ -323,7 +323,7 @@
 
       <div class="action-bar">
         <div style="font-size: 0.8rem; color: var(--text-muted);">
-          💡 <strong>맵 조작 가이드</strong>: 대표 마커와 <strong>Gate 1~3 센서 핀</strong>을 마우스로 직접 잡고 드래그하여 골목 및 출입구 위치를 자유롭게 이동/수정할 수 있습니다.
+          💡 <strong>맵 조작 가이드</strong>: 대표 마커와 <strong>Gate 1~3 센서 핀</strong>을 마우스로 직접 드래그하여 골목 및 출입구 위치를 자유롭게 이동/수정할 수 있습니다.
         </div>
       </div>
     </div>
@@ -377,7 +377,7 @@
 
     function handleEnglishNameInput(engVal) {
       const currentSlug = document.getElementById('slug').value;
-      if (!currentSlug || currentSlug === 'flinders_station') {
+      if (!currentSlug || currentSlug === 'state_library_victoria' || currentSlug === '') {
         const autoSlug = (engVal || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
         if (autoSlug) {
           document.getElementById('slug').value = autoSlug;
@@ -401,18 +401,10 @@
           route_file: "routes/tour_walk_melbourne_highlights_ko.geojson"
         }
       ],
-      Tour_Stops: [
-        {
-          tour_id: "tour_walk_melbourne_highlights_ko",
-          seq: 1,
-          poi_id: "poi_flinders_station",
-          trigger_gate: "gate_1",
-          departure_audio_id: "aud_step1_to_2_ko_departure"
-        }
-      ]
+      Tour_Stops: []
     };
 
-    // 4. Leaflet 맵 & 지오펜스 오버레이 (OSM France 단일 맵 & Gate 드래그 인터랙션)
+    // 4. Leaflet 맵 & 지오펜스 오버레이 (멜버른 중심부 기본 초기화 및 드래그 인터랙션)
     let map = null, mainMarker = null;
     const gateLayers = {
       1: { circle: null, marker: null },
@@ -426,8 +418,9 @@
         const mapEl = document.getElementById('map');
         if (!mapEl) return;
 
-        const initLat = parseFloat(document.getElementById('lat').value) || -37.8180;
-        const initLng = parseFloat(document.getElementById('lng').value) || 144.9671;
+        // 초기 기본 뷰: 멜버른 중심부 (Federation Square / Flinders St 기준)
+        const initLat = -37.8180;
+        const initLng = 144.9671;
 
         const osmFranceLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
           maxZoom: 20,
@@ -436,22 +429,10 @@
 
         map = L.map('map', {
           center: [initLat, initLng],
-          zoom: 17,
+          zoom: 16,
           layers: [osmFranceLayer]
         });
 
-        if (document.getElementById('lat').value && document.getElementById('lng').value) {
-          mainMarker = L.marker([initLat, initLng], { draggable: true, title: "대표 POI 좌표 (드래그 가능)" }).addTo(map);
-          mainMarker.on('dragend', function (e) {
-            const pos = e.target.getLatLng();
-            document.getElementById('lat').value = pos.lat.toFixed(6);
-            document.getElementById('lng').value = pos.lng.toFixed(6);
-          });
-        }
-
-        updateGateFromInputs(1);
-        updateGateFromInputs(2);
-        updateGateFromInputs(3);
       } catch (e) {
         console.error("Map initialization error:", e);
       }
@@ -472,7 +453,6 @@
         radius: radius || 20
       }).addTo(map);
 
-      // Gate 마커에 드래그 기능(draggable: true) 부여 및 드래그 종료 시 폼 좌표와 원형 반경 실시간 동기화
       const gateMarker = L.marker([lat, lng], {
         draggable: true,
         title: "Gate " + gateNum + " (마우스로 드래그하여 위치 수정 가능)",
@@ -503,7 +483,7 @@
       const lng = parseFloat(document.getElementById('lng').value);
       if (!isNaN(lat) && !isNaN(lng)) {
         if (!mainMarker) {
-          mainMarker = L.marker([lat, lng], { draggable: true, title: "대표 POI 좌표" }).addTo(map);
+          mainMarker = L.marker([lat, lng], { draggable: true, title: "대표 POI 좌표 (드래그 가능)" }).addTo(map);
           mainMarker.on('dragend', function (e) {
             const pos = e.target.getLatLng();
             document.getElementById('lat').value = pos.lat.toFixed(6);
@@ -513,6 +493,11 @@
           mainMarker.setLatLng([lat, lng]);
         }
         map.panTo([lat, lng]);
+      } else {
+        if (mainMarker) {
+          map.removeLayer(mainMarker);
+          mainMarker = null;
+        }
       }
     }
 
@@ -527,6 +512,8 @@
       } else {
         if (gateLayers[num].circle) map.removeLayer(gateLayers[num].circle);
         if (gateLayers[num].marker) map.removeLayer(gateLayers[num].marker);
+        gateLayers[num].circle = null;
+        gateLayers[num].marker = null;
       }
     }
 
@@ -585,8 +572,6 @@
       }
 
       document.getElementById('saved_poi_selector').value = '';
-      document.getElementById('name_en').focus();
-      alert("입력 폼이 초기화되었습니다.\n[명소 명칭(영어)] 또는 [한국어]를 입력하신 후 [✨ AI 원클릭 초안 자동 완성]을 눌러주세요.");
     }
 
     // 6. API Key 안전 관리
@@ -985,7 +970,7 @@
       downloadAnchor.remove();
     }
 
-    // 12. DOM 로드 완료 후 리스너 안전 바인딩
+    // 12. DOM 로드 완료 후 리스너 안전 바인딩 (최초 실행 시 빈 폼 유지)
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('btn_config_key').addEventListener('click', configureApiKey);
       document.getElementById('btn_ai_generate').addEventListener('click', generateWithGemini);
@@ -1036,9 +1021,9 @@
         console.error("Backup load error:", e);
       }
 
-      handleSlugChange(document.getElementById('slug').value);
-      updateSpeechCalc('ko', document.getElementById('aud_arrival_script').value, 'arrival_calc');
-      updateSpeechCalc('ko', document.getElementById('aud_main_script').value, 'main_calc');
+      handleSlugChange('');
+      updateSpeechCalc('ko', '', 'arrival_calc');
+      updateSpeechCalc('ko', '', 'main_calc');
       
       initMap();
     });
