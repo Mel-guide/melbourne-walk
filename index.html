@@ -12,209 +12,290 @@
 <body>
 
   <header>
-    <h1>Melbourne & Outdoors Audio Guide <span class="badge">어드민 CMS v4.0 (모듈러)</span></h1>
+    <h1>Melbourne & Outdoors Audio Guide <span class="badge">어드민 CMS v4.0 (5대 마스터 대시보드)</span></h1>
     <div style="display: flex; gap: 8px; align-items: center;">
       <button type="button" class="btn btn-outline" id="btn_config_key">🔑 API Key 설정</button>
       <button type="button" class="btn btn-export" id="btn_export_csv">🎧 성우/TTS 큐시트(CSV)</button>
       <input type="file" id="import_file_input" accept=".json" style="display: none;">
-      <button type="button" class="btn btn-outline" id="btn_import_json">📂 JSON</button>
-      <button type="button" class="btn btn-outline" id="btn_export_json">📦 내보내기</button>
+      <button type="button" class="btn btn-outline" id="btn_import_json">📂 JSON 로드</button>
+      <button type="button" class="btn btn-outline" id="btn_export_json">📦 전체 내보내기</button>
     </div>
   </header>
 
-  <div class="container">
-    <!-- 좌측 폼 패널 -->
-    <div class="form-panel">
-      
-      <!-- 상단 컨트롤러: 작업 목록 및 구조화된 메뉴형 액션 바 -->
-      <div style="background: #e8f0fe; padding: 14px; border-radius: 6px; margin-bottom: 18px; border: 1px solid #c2e7ff; display: flex; flex-direction: column; gap: 10px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <label style="color: var(--primary); font-weight: 700; font-size: 0.82rem;">
-            📋 관리 중인 POI 목록 (<span id="poi_count_badge">0</span>개)
-          </label>
-          <button type="button" class="btn btn-new" id="btn_new_registration">➕ 신규 등록 모드</button>
-        </div>
-        
-        <select id="saved_poi_selector" class="form-control">
-          <option value="">-- 수정할 명소를 선택하세요 --</option>
-        </select>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; border-top: 1px solid #d2e3fc; padding-top: 10px;">
-          <button type="button" class="btn btn-ai" id="btn_ai_generate" style="justify-content: center; font-size: 0.78rem;" title="명칭 입력 후 AI 초안 생성">✨ AI 자동완성</button>
-          <button type="button" class="btn btn-outline" id="btn_toggle_edit" style="border-color: #f9ab00; color: #b78103; font-weight: 700; justify-content: center; font-size: 0.78rem;" title="선택한 POI 수정 모드 전환">🔒 수정 모드</button>
-          <button type="button" class="btn btn-danger" id="btn_delete_poi" style="justify-content: center; font-size: 0.78rem;">🗑️ 삭제</button>
-          <button type="button" class="btn btn-primary" id="btn_save_poi" style="justify-content: center; font-size: 0.78rem;">💾 저장</button>
-        </div>
-      </div>
+  <!-- 메인 네비게이션 탭 (5대 마스터 모듈 허브) -->
+  <nav class="master-nav-tabs">
+    <button type="button" class="tab-btn active" data-target="view_dashboard">📊 대시보드 홈</button>
+    <button type="button" class="tab-btn" data-target="view_pois">📍 1. POIs 관리</button>
+    <button type="button" class="tab-btn" data-target="view_audios">🎧 2. Audios 관리</button>
+    <button type="button" class="tab-btn" data-target="view_media">🖼️ 3. Media 에셋</button>
+    <button type="button" class="tab-btn" data-target="view_tours">🗺️ 4. Tours 상품</button>
+    <button type="button" class="tab-btn" data-target="view_stops">🔗 5. Tour_Stops 편성</button>
+  </nav>
 
-      <!-- 1. POI 기본 정보 -->
-      <div class="section-title">
-        <span>1. POI 기본 정보 (POIs Master)</span>
-        <span style="font-size: 0.75rem; color: var(--text-muted);">* 표시는 필수</span>
-      </div>
+  <!-- 컨테이너 뷰 영역 -->
+  <main class="main-container">
 
-      <div class="grid-2">
-        <div class="form-group">
-          <label>명소 명칭 (영어: name_en) [AI 검색 기준 권장] *</label>
-          <input type="text" id="name_en" class="form-control" placeholder="예: State Library Victoria..." readonly>
+    <!-- 0. 대시보드 홈 뷰 -->
+    <section id="view_dashboard" class="content-view active">
+      <div class="dashboard-hero">
+        <h2>Welcome to Admin CMS v4.0 Hub</h2>
+        <p>Offline-First 및 온디맨드 번들링 아키텍처 기반의 5대 마스터 테이블 통합 관리 시스템입니다.</p>
+      </div>
+      <div class="dashboard-grid">
+        <div class="dash-card" onclick="switchView('view_pois')">
+          <h3>📍 POIs Master</h3>
+          <p class="dash-count" id="dash_poi_count">0개 등록됨</p>
+          <span>명소 정보 및 지오펜스 Gate 1~3 관리 ➔</span>
         </div>
-        <div class="form-group">
-          <label>명소 명칭 (한국어: name_ko) *</label>
-          <input type="text" id="name_ko" class="form-control" placeholder="예: 빅토리아 주립 도서관..." readonly>
+        <div class="dash-card" onclick="switchView('view_audios')">
+          <h3>🎧 Audios Master</h3>
+          <p class="dash-count" id="dash_audio_count">0개 대본 연동</p>
+          <span>오디오 큐시트 및 성우 녹음 대본 관리 ➔</span>
+        </div>
+        <div class="dash-card" onclick="switchView('view_media')">
+          <h3>🖼️ Media Master</h3>
+          <p class="dash-count" id="dash_media_count">0개 에셋</p>
+          <span>히어로 및 썸네일 이미지 에셋 관리 ➔</span>
+        </div>
+        <div class="dash-card" onclick="switchView('view_tours')">
+          <h3>🗺️ Tours Master</h3>
+          <p class="dash-count" id="dash_tour_count">1개 코스</p>
+          <span>도보/드라이브 투어 상품 및 GeoJSON 관리 ➔</span>
+        </div>
+        <div class="dash-card" onclick="switchView('view_stops')">
+          <h3>🔗 Tour_Stops Master</h3>
+          <p class="dash-count" id="dash_stop_count">0개 스탑</p>
+          <span>투어별 동선 순번 및 게이트 트리거 편성 ➔</span>
         </div>
       </div>
-      
-      <div class="grid-2">
-        <div class="form-group">
-          <label>POI ID (자동 생성: poi_{slug}) *</label>
-          <input type="text" id="poi_id" class="form-control" readonly placeholder="poi_slug">
-        </div>
-        <div class="form-group">
-          <label>Slug (소문자 스네이크 케이스) *</label>
-          <input type="text" id="slug" class="form-control" placeholder="state_library_victoria" readonly>
-        </div>
-      </div>
+    </section>
 
-      <div class="grid-3">
-        <div class="form-group">
-          <label>카테고리 (category)</label>
-          <select id="category" class="form-control" disabled>
-            <option value="history" selected>역사/건축</option>
-            <option value="nature">자연/공원</option>
-            <option value="culture">문화/예술</option>
-            <option value="scenic">전망/스팟</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>권장 체류(분: visit_minutes)</label>
-          <input type="number" id="visit_minutes" class="form-control" value="20" readonly>
-        </div>
-        <div class="form-group">
-          <label>배포 상태 (status)</label>
-          <select id="status" class="form-control" disabled>
-            <option value="draft" selected>draft</option>
-            <option value="ready">ready</option>
-            <option value="published">published</option>
-          </select>
-        </div>
-      </div>
+    <!-- 1. POIs 관리 뷰 (지도 + 폼 통합) -->
+    <section id="view_pois" class="content-view">
+      <div class="split-pane">
+        <!-- 좌측 폼 패널 -->
+        <div class="form-panel">
+          <div style="background: #e8f0fe; padding: 14px; border-radius: 6px; margin-bottom: 18px; border: 1px solid #c2e7ff; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label style="color: var(--primary); font-weight: 700; font-size: 0.82rem;">
+                📋 관리 중인 POI 목록 (<span id="poi_count_badge">0</span>개)
+              </label>
+              <button type="button" class="btn btn-new" id="btn_new_registration">➕ 신규 등록 모드</button>
+            </div>
+            <select id="saved_poi_selector" class="form-control">
+              <option value="">-- 수정할 명소를 선택하세요 --</option>
+            </select>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; border-top: 1px solid #d2e3fc; padding-top: 10px;">
+              <button type="button" class="btn btn-ai" id="btn_ai_generate" style="justify-content: center; font-size: 0.78rem;" title="AI 초안 생성">✨ AI 자동완성</button>
+              <button type="button" class="btn btn-outline" id="btn_toggle_edit" style="border-color: #f9ab00; color: #b78103; font-weight: 700; justify-content: center; font-size: 0.78rem;">🔒 수정 모드</button>
+              <button type="button" class="btn btn-danger" id="btn_delete_poi" style="justify-content: center; font-size: 0.78rem;">🗑️ 삭제</button>
+              <button type="button" class="btn btn-primary" id="btn_save_poi" style="justify-content: center; font-size: 0.78rem;">💾 저장</button>
+            </div>
+          </div>
 
-      <div class="grid-2">
-        <div class="form-group">
-          <label>대표 위도 (lat) *</label>
-          <input type="number" step="0.000001" id="lat" class="form-control" placeholder="-37.xxxxxx" readonly>
-        </div>
-        <div class="form-group">
-          <label>대표 경도 (lng) *</label>
-          <input type="number" step="0.000001" id="lng" class="form-control" placeholder="144.xxxxxx" readonly>
-        </div>
-      </div>
+          <div class="section-title">
+            <span>1. POI 기본 정보 (POIs Master)</span>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">* 표시는 필수</span>
+          </div>
 
-      <!-- 2. 지오펜스 센서 (Gate 1~3) -->
-      <div class="section-title"><span>2. 지오펜스 센서 (Gate 1~3)</span></div>
-      
-      <div class="form-group">
-        <label><input type="checkbox" id="has_gate" checked disabled> 게이트 센서 활성화 (has_gate)</label>
-      </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>명소 명칭 (영어: name_en) *</label>
+              <input type="text" id="name_en" class="form-control" placeholder="예: State Library Victoria" readonly>
+            </div>
+            <div class="form-group">
+              <label>명소 명칭 (한국어: name_ko) *</label>
+              <input type="text" id="name_ko" class="form-control" placeholder="예: 빅토리아 주립 도서관" readonly>
+            </div>
+          </div>
+          
+          <div class="grid-2">
+            <div class="form-group">
+              <label>POI ID (자동 생성: poi_{slug}) *</label>
+              <input type="text" id="poi_id" class="form-control" readonly placeholder="poi_slug">
+            </div>
+            <div class="form-group">
+              <label>Slug (소문자 스네이크 케이스) *</label>
+              <input type="text" id="slug" class="form-control" placeholder="state_library_victoria" readonly>
+            </div>
+          </div>
 
-      <!-- Gate 1 -->
-      <div class="gate-card gate-1" id="gate_1_wrapper">
-        <h4><span>Gate 1 (주 진입로 - 필수)</span> <span style="color:var(--gate1-color)">기본 20m</span></h4>
-        <div class="grid-3">
-          <div class="form-group"><label>Gate 1 Lat</label><input type="number" step="0.000001" id="gate_1_lat" class="form-control" readonly></div>
-          <div class="form-group"><label>Gate 1 Lng</label><input type="number" step="0.000001" id="gate_1_lng" class="form-control" readonly></div>
-          <div class="form-group"><label>Radius (m)</label><input type="number" id="gate_1_radius" class="form-control" value="20" readonly></div>
-        </div>
-      </div>
+          <div class="grid-3">
+            <div class="form-group">
+              <label>카테고리</label>
+              <select id="category" class="form-control" disabled>
+                <option value="history" selected>역사/건축</option>
+                <option value="nature">자연/공원</option>
+                <option value="culture">문화/예술</option>
+                <option value="scenic">전망/스팟</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>권장 체류(분)</label>
+              <input type="number" id="visit_minutes" class="form-control" value="20" readonly>
+            </div>
+            <div class="form-group">
+              <label>배포 상태</label>
+              <select id="status" class="form-control" disabled>
+                <option value="draft" selected>draft</option>
+                <option value="ready">ready</option>
+                <option value="published">published</option>
+              </select>
+            </div>
+          </div>
 
-      <!-- Gate 2 -->
-      <div class="gate-card gate-2" id="gate_2_wrapper">
-        <h4><span>Gate 2 (관통형/보조 진입로)</span> <span style="color:var(--gate2-color)">선택</span></h4>
-        <div class="grid-3">
-          <div class="form-group"><label>Gate 2 Lat</label><input type="number" step="0.000001" id="gate_2_lat" class="form-control" readonly></div>
-          <div class="form-group"><label>Gate 2 Lng</label><input type="number" step="0.000001" id="gate_2_lng" class="form-control" readonly></div>
-          <div class="form-group"><label>Radius (m)</label><input type="number" id="gate_2_radius" class="form-control" value="20" readonly></div>
-        </div>
-      </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>대표 위도 (lat) *</label>
+              <input type="number" step="0.000001" id="lat" class="form-control" placeholder="-37.xxxxxx" readonly>
+            </div>
+            <div class="form-group">
+              <label>대표 경도 (lng) *</label>
+              <input type="number" step="0.000001" id="lng" class="form-control" placeholder="144.xxxxxx" readonly>
+            </div>
+          </div>
 
-      <!-- Gate 3 -->
-      <div class="gate-card gate-3" id="gate_3_wrapper">
-        <h4><span>Gate 3 (광장 교차점)</span> <span style="color:var(--gate3-color)">선택</span></h4>
-        <div class="grid-3">
-          <div class="form-group"><label>Gate 3 Lat</label><input type="number" step="0.000001" id="gate_3_lat" class="form-control" readonly></div>
-          <div class="form-group"><label>Gate 3 Lng</label><input type="number" step="0.000001" id="gate_3_lng" class="form-control" readonly></div>
-          <div class="form-group"><label>Radius (m)</label><input type="number" id="gate_3_radius" class="form-control" value="20" readonly></div>
-        </div>
-      </div>
+          <div class="section-title"><span>2. 지오펜스 센서 (Gate 1~3)</span></div>
+          <div class="form-group">
+            <label><input type="checkbox" id="has_gate" checked disabled> 게이트 센서 활성화 (has_gate)</label>
+          </div>
 
-      <!-- 3. 고객 공개 스토리 및 가이드 -->
-      <div class="section-title">3. 스토리 및 현장 가이드 (Client Side)</div>
-      <div class="form-group">
-        <label>배경 역사 요약 (story_summary: 3~4줄)</label>
-        <textarea id="story_summary" class="form-control" placeholder="명소의 역사적 배경과 핵심 스토리..." readonly></textarea>
-      </div>
-      <div class="form-group">
-        <label>현장 꿀팁 & 포토존 (guide_tips)</label>
-        <textarea id="guide_tips" class="form-control" placeholder="방문객 관람 팁 및 포토존..." readonly></textarea>
-      </div>
+          <!-- Gate 1 -->
+          <div class="gate-card gate-1" id="gate_1_wrapper">
+            <h4><span>Gate 1 (주 진입로 - 필수)</span> <span style="color:var(--gate1-color)">기본 20m</span></h4>
+            <div class="grid-3">
+              <div class="form-group"><label>Lat</label><input type="number" step="0.000001" id="gate_1_lat" class="form-control" readonly></div>
+              <div class="form-group"><label>Lng</label><input type="number" step="0.000001" id="gate_1_lng" class="form-control" readonly></div>
+              <div class="form-group"><label>Radius(m)</label><input type="number" id="gate_1_radius" class="form-control" value="20" readonly></div>
+            </div>
+          </div>
 
-      <!-- 4. 연계 오디오 대본 -->
-      <div class="section-title">
-        <span>4. 연계 오디오 대본 (Audios Master)</span>
-        <span style="font-size: 0.72rem; color: var(--text-muted);">Mono 96kbps MP3</span>
-      </div>
-      
-      <div class="audio-card">
-        <div class="audio-card-header">
-          <span class="audio-tag">arrival (도착 안내)</span>
-          <span class="speech-indicator" id="arrival_calc">0자 | 예상 0.0초</span>
-        </div>
-        <div class="form-group">
-          <div class="audio-meta" id="aud_arrival_meta">ID: aud_{slug}_ko_arrival</div>
-          <textarea id="aud_arrival_script" class="form-control" style="margin-top:6px;" placeholder="도착 안내 구어체 대본..." readonly></textarea>
-        </div>
-      </div>
+          <!-- Gate 2 -->
+          <div class="gate-card gate-2" id="gate_2_wrapper">
+            <h4><span>Gate 2 (보조 진입로)</span> <span style="color:var(--gate2-color)">선택</span></h4>
+            <div class="grid-3">
+              <div class="form-group"><label>Lat</label><input type="number" step="0.000001" id="gate_2_lat" class="form-control" readonly></div>
+              <div class="form-group"><label>Lng</label><input type="number" step="0.000001" id="gate_2_lng" class="form-control" readonly></div>
+              <div class="form-group"><label>Radius(m)</label><input type="number" id="gate_2_radius" class="form-control" value="20" readonly></div>
+            </div>
+          </div>
 
-      <div class="audio-card">
-        <div class="audio-card-header">
-          <span class="audio-tag">main (본해설)</span>
-          <span class="speech-indicator" id="main_calc">0자 | 예상 0.0초</span>
-        </div>
-        <div class="form-group">
-          <div class="audio-meta" id="aud_main_meta">ID: aud_{slug}_ko_main</div>
-          <textarea id="aud_main_script" class="form-control" style="min-height: 110px; margin-top:6px;" placeholder="본해설 오디오 대본..." readonly></textarea>
-        </div>
-      </div>
+          <!-- Gate 3 -->
+          <div class="gate-card gate-3" id="gate_3_wrapper">
+            <h4><span>Gate 3 (광장 교차점)</span> <span style="color:var(--gate3-color)">선택</span></h4>
+            <div class="grid-3">
+              <div class="form-group"><label>Lat</label><input type="number" step="0.000001" id="gate_3_lat" class="form-control" readonly></div>
+              <div class="form-group"><label>Lng</label><input type="number" step="0.000001" id="gate_3_lng" class="form-control" readonly></div>
+              <div class="form-group"><label>Radius(m)</label><input type="number" id="gate_3_radius" class="form-control" value="20" readonly></div>
+            </div>
+          </div>
 
-      <!-- 5. 관리자 비공개 데이터 -->
-      <div class="section-title">5. 관리자 비공개 데이터 (admin_notes)</div>
-      <div class="admin-notes-card">
-        <div class="form-group" style="margin-bottom: 0;">
-          <label style="color: #b78103; font-weight:700;">인솔/주차/안전 메모 (고객 앱 자동 제외)</label>
-          <textarea id="admin_notes" class="form-control" style="margin-top:4px;" placeholder="관리자 전용 메모..." readonly></textarea>
-        </div>
-      </div>
+          <div class="section-title">3. 스토리 및 현장 가이드 (Client Side)</div>
+          <div class="form-group">
+            <label>배경 역사 요약 (story_summary)</label>
+            <textarea id="story_summary" class="form-control" placeholder="역사적 배경 3~4줄..." readonly></textarea>
+          </div>
+          <div class="form-group">
+            <label>현장 꿀팁 & 포토존 (guide_tips)</label>
+            <textarea id="guide_tips" class="form-control" placeholder="관람 팁 및 포토존..." readonly></textarea>
+          </div>
 
-    </div>
+          <div class="section-title">
+            <span>4. 연계 오디오 대본 (Audios Master 양방향 바인딩)</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">Mono 96kbps MP3</span>
+          </div>
+          
+          <div class="audio-card">
+            <div class="audio-card-header">
+              <span class="audio-tag">arrival (도착 안내)</span>
+              <span class="speech-indicator" id="arrival_calc">0자 | 예상 0.0초</span>
+            </div>
+            <div class="form-group">
+              <div class="audio-meta" id="aud_arrival_meta">ID: aud_{slug}_ko_arrival</div>
+              <textarea id="aud_arrival_script" class="form-control" style="margin-top:6px;" placeholder="도착 안내 구어체 대본..." readonly></textarea>
+            </div>
+          </div>
 
-    <!-- 우측 맵 패널 -->
-    <div class="map-panel">
-      <div id="map"></div>
-      <div class="map-controls-overlay">
-        <strong>Geofence Gate Map Controller</strong>
-        <div class="map-legend">
-          <div class="legend-item"><span class="legend-dot" style="background:var(--primary);"></span> 대표 / Gate 1</div>
-          <div class="legend-item"><span class="legend-dot" style="background:var(--gate2-color);"></span> Gate 2</div>
-          <div class="legend-item"><span class="legend-dot" style="background:var(--gate3-color);"></span> Gate 3</div>
+          <div class="audio-card">
+            <div class="audio-card-header">
+              <span class="audio-tag">main (본해설)</span>
+              <span class="speech-indicator" id="main_calc">0자 | 예상 0.0초</span>
+            </div>
+            <div class="form-group">
+              <div class="audio-meta" id="aud_main_meta">ID: aud_{slug}_ko_main</div>
+              <textarea id="aud_main_script" class="form-control" style="min-height: 110px; margin-top:6px;" placeholder="본해설 오디오 대본..." readonly></textarea>
+            </div>
+          </div>
+
+          <div class="section-title">5. 관리자 비공개 데이터 (admin_notes)</div>
+          <div class="admin-notes-card">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="color: #b78103; font-weight:700;">인솔/주차/안전 메모 (고객 앱 자동 제외)</label>
+              <textarea id="admin_notes" class="form-control" style="margin-top:4px;" placeholder="관리자 전용 메모..." readonly></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 우측 맵 패널 -->
+        <div class="map-panel">
+          <div id="map"></div>
+          <div class="map-controls-overlay">
+            <strong>Geofence Gate Map Controller</strong>
+            <div class="map-legend">
+              <div class="legend-item"><span class="legend-dot" style="background:var(--primary);"></span> 대표 / Gate 1</div>
+              <div class="legend-item"><span class="legend-dot" style="background:var(--gate2-color);"></span> Gate 2</div>
+              <div class="legend-item"><span class="legend-dot" style="background:var(--gate3-color);"></span> Gate 3</div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="action-bar">
-        <div style="font-size: 0.8rem; color: var(--text-muted);">
-          💡 <strong>맵 조작 가이드</strong>: <strong>[신규 등록 모드]</strong> 또는 <strong>[수정 모드]</strong> 활성화 시 핀을 드래그하여 좌표를 수정할 수 있습니다.
+    </section>
+
+    <!-- 2. Audios 관리 뷰 -->
+    <section id="view_audios" class="content-view">
+      <div class="module-pane">
+        <h2>🎧 Audios Master (단일 원천 오디오 관리)</h2>
+        <p class="module-desc">등록된 모든 POI 및 투어의 오디오 큐시트와 예상 재생 시간(Mono 96kbps MP3)을 일괄 관리합니다.</p>
+        <div id="audios_table_container" class="master-table-wrapper">
+          <!-- 동적 렌더링 영역 -->
         </div>
       </div>
-    </div>
-  </div>
+    </section>
+
+    <!-- 3. Media 에셋 관리 뷰 -->
+    <section id="view_media" class="content-view">
+      <div class="module-pane">
+        <h2>🖼️ Media Master (시각 에셋 관리)</h2>
+        <p class="module-desc">각 명소 및 투어와 연계된 히어로(Hero) 및 썸네일(Thumb) 이미지 에셋 레코드를 관리합니다.</p>
+        <div id="media_table_container" class="master-table-wrapper">
+          <!-- 동적 렌더링 영역 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Tours 상품 마스터 뷰 -->
+    <section id="view_tours" class="content-view">
+      <div class="module-pane">
+        <h2>🗺️ Tours Master (투어 상품 메타)</h2>
+        <p class="module-desc">도보(walk), 드라이브(drive), 하이킹(hike) 모드별 투어 상품 메타데이터와 GeoJSON 경로를 관리합니다.</p>
+        <div id="tours_table_container" class="master-table-wrapper">
+          <!-- 동적 렌더링 영역 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Tour_Stops 동선 편성 뷰 -->
+    <section id="view_stops" class="content-view">
+      <div class="module-pane">
+        <h2>🔗 Tour_Stops Master (투어 코스 및 게이트 트리거 편성)</h2>
+        <p class="module-desc">투어별 방문 순번(seq), 진입 센서(trigger_gate), 관람 후 이동 오디오(departure_audio_id)를 연결합니다.</p>
+        <div id="stops_table_container" class="master-table-wrapper">
+          <!-- 동적 렌더링 영역 -->
+        </div>
+      </div>
+    </section>
+
+  </main>
 
   <!-- Leaflet Map JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
