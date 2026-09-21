@@ -92,7 +92,8 @@
   <header>
     <h1>Melbourne & Outdoors Audio Guide <span class="badge">어드민 CMS v4.0</span></h1>
     <div style="display: flex; gap: 8px;">
-      <button class="btn btn-ai" onclick="simulateAiGeneration()">✨ AI 원클릭 초안 자동 완성</button>
+      <button class="btn btn-outline" onclick="configureApiKey()">🔑 API Key 설정</button>
+      <button class="btn btn-ai" onclick="generateWithGemini()">✨ AI 원클릭 초안 자동 완성</button>
       <button class="btn btn-export" onclick="exportCueSheetCSV()">🎧 성우/TTS 큐시트(CSV)</button>
       <button class="btn btn-outline" onclick="exportMasterJSON()">📦 마스터 JSON 내보내기</button>
       <button class="btn btn-primary" onclick="saveCurrentPoi()">💾 현재 POI 저장</button>
@@ -245,7 +246,7 @@
         <textarea id="guide_tips" class="form-control">시계탑 정면 대각선 방향인 세인트 폴 대성당 앞 계단에 서서 올려다볼 때 가장 웅장한 구도가 나옵니다. 트램이 지나가는 순간을 함께 포착해 보세요.</textarea>
       </div>
 
-      <!-- 4. Audios 마스터 양방향 바인딩 대본 (Mono 96kbps MP3 표준 규격) -->
+      <!-- 4. Audios 마스터 양방향 바인딩 대본 (Mono 96kbps MP3 규격 고정) -->
       <div class="section-title">
         <span>4. 연계 오디오 대본 (Audios Master 양방향 바인딩)</span>
         <span style="font-size: 0.72rem; color: var(--text-muted);">표준: Mono 96kbps MP3</span>
@@ -319,8 +320,6 @@
      */
 
     // 1. 실시간 낭독 시간 계산 엔진
-    // 한국어: 공백 제외 글자 수 ÷ 5.2 = 예상 재생 초(sec)
-    // 영어: Word Count ÷ 2.3 = 예상 재생 초(sec)
     function calculateSpeechDuration(text, lang = 'ko') {
       if (!text || typeof text !== 'string') return { count: 0, seconds: 0 };
       if (lang === 'ko') {
@@ -337,7 +336,7 @@
     function updateSpeechCalc(lang, text, targetElementId) {
       const { count, seconds } = calculateSpeechDuration(text, lang);
       const label = lang === 'ko' ? `${count}자` : `${count} words`;
-      document.getElementById(targetElementId).innerText = `${label} | 예상 ${seconds}초`;
+      document.getElementById(targetElementId).innerText = `${label} \vert{} 예상 ${seconds}초`;
     }
 
     // 2. ID 생성기 및 양방향 동기화 (규격: poi_{slug}, aud_{slug}_{lang}_{segment})
@@ -348,8 +347,8 @@
       const arrId = cleanSlug ? `aud_${cleanSlug}_ko_arrival` : 'aud_{slug}_ko_arrival';
       const mainId = cleanSlug ? `aud_${cleanSlug}_ko_main` : 'aud_{slug}_ko_main';
       
-      document.getElementById('aud_arrival_meta').innerText = `ID: ${arrId} | audio/${arrId}.mp3`;
-      document.getElementById('aud_main_meta').innerText = `ID: ${mainId} | audio/${mainId}.mp3`;
+      document.getElementById('aud_arrival_meta').innerText = `ID: ${arrId} \vert{} audio/${arrId}.mp3`;
+      document.getElementById('aud_main_meta').innerText = `ID: ${mainId} \vert{} audio/${mainId}.mp3`;
     }
 
     // 3. Leaflet 맵 & 레이어 스위처 & 지오펜스 오버레이 인스턴스
@@ -462,7 +461,155 @@
       });
     }
 
-    // 4. 인메모리 5대 마스터 DB 스토어 (스키마 v4.0 완벽 준수)
+    // 4. API Key 안전 관리 (브라우저 localStorage 보관)
+    function configureApiKey() {
+      const currentKey = localStorage.getItem('GEMINI_API_KEY') || '';
+      const inputKey = prompt(
+        "Google Gemini API Key를 입력해주세요:\n\n* 키는 사용자 컴퓨터 브라우저(localStorage)에만 안전하게 보관되며, GitHub 공개 코드에 절대 커밋되지 않습니다.",
+        currentKey
+      );
+      if (inputKey !== null) {
+        const trimmed = inputKey.trim();
+        if (trimmed) {
+          localStorage.setItem('GEMINI_API_KEY', trimmed);
+          alert("Gemini API Key가 안전하게 저장되었습니다.\n이제 명소 이름 입력 후 [✨ AI 원클릭 초안 자동 완성]을 사용하실 수 있습니다.");
+        } else {
+          localStorage.removeItem('GEMINI_API_KEY');
+          alert("API Key가 삭제되었습니다.");
+        }
+      }
+    }
+
+    // 5. 실시간 Gemini API 통신 엔진 (v4.0 마스터 스키마 자동 생성)
+    async function generateWithGemini() {
+      const apiKey = localStorage.getItem('GEMINI_API_KEY');
+      if (!apiKey) {
+        alert("Gemini API Key가 등록되지 않았습니다.\n먼저 상단의 [🔑 API Key 설정] 버튼을 눌러 키를 1회 등록해 주세요.");
+        configureApiKey();
+        return;
+      }
+
+      const targetName = document.getElementById('name_ko').value.trim();
+      if (!targetName) {
+        alert("초안을 생성할 명소 명칭(한국어: name_ko)을 입력해 주세요.\n예: 빅토리아 주립 도서관, 퍼핑 빌리, 호시어 레인 등");
+        document.getElementById('name_ko').focus();
+        return;
+      }
+
+      const btn = document.querySelector('.btn-ai');
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = "⏳ Gemini 실시간 생성 중...";
+      btn.disabled = true;
+
+      try {
+        const systemPrompt = `당신은 'Melbourne & Outdoors Audio Guide' 플랫폼의 수석 테크니컬 아키텍트이자 오디오 가이드 전문 작가입니다.
+명소 명칭: "${targetName}"
+
+요구사항:
+1. 마스터 스키마 v4.0 규격을 엄격히 준수하여 완전한 JSON 단일 객체만 반환하세요.
+2. 백틱(\`\`\`json)이나 설명 없이 순수 JSON 문자열만 출력하세요.
+3. 멜버른 및 빅토리아주의 실제 현장 지형과 GPS 좌표(-37.xxxxxx, 144.xxxxxx)를 정확하게 반영하세요.
+4. arrival_script는 현장 도착 시 특정 건축 요소나 풍경으로 시선을 이끄는 1~2문장의 생생한 구어체 멘트여야 합니다.
+5. main_script는 100년 전 역사와 현장 비하인드 스토리를 담은 품격 있는 구어체 오디오 해설(공백 제외 300~450자)이어야 합니다.
+
+JSON 출력 포맷:
+{
+  "slug": "영문_소문자_스네이크_케이스",
+  "name_ko": "한국어 명칭",
+  "name_en": "영어 공식 명칭",
+  "lat": 멜버른_현장_실제_위도_실수,
+  "lng": 멜버른_현장_실제_경도_실수,
+  "category": "history, nature, culture, scenic 중 택1",
+  "visit_minutes": 권장체류_정수,
+  "has_gate": true,
+  "gate_1_lat": 주진입로_위도,
+  "gate_1_lng": 주진입로_경도,
+  "gate_1_radius": 20,
+  "gate_2_lat": 보조진입로_위도_또는_null,
+  "gate_2_lng": 보조진입로_경도_또는_null,
+  "gate_2_radius": 20,
+  "gate_3_lat": 광장_교차점_위도_또는_null,
+  "gate_3_lng": 광장_교차점_경도_또는_null,
+  "gate_3_radius": 20,
+  "story_summary": "고객 공개: 배경 역사 요약 3~4줄",
+  "guide_tips": "고객 공개: 현장 꿀팁, 포토존, 시선 유도",
+  "admin_notes": "관리자 비공개: 주차 구역, 인솔 주의사항, 안전 메모",
+  "arrival_script": "도착 안내 구어체 대본",
+  "main_script": "본해설 품격 있는 구어체 대본"
+}`;
+
+        // Gemini 1.5 Flash 엔드포인트 호출
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: systemPrompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+              responseMimeType: "application/json"
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error?.message || `HTTP ${response.status} 오류 발생`);
+        }
+
+        const resData = await response.json();
+        const rawJson = resData.candidates[0].content.parts[0].text;
+        const aiData = JSON.parse(rawJson);
+
+        // 폼 필드 실시간 맵핑
+        document.getElementById('slug').value = aiData.slug;
+        handleSlugChange(aiData.slug);
+
+        document.getElementById('name_ko').value = aiData.name_ko;
+        document.getElementById('name_en').value = aiData.name_en;
+        document.getElementById('lat').value = aiData.lat;
+        document.getElementById('lng').value = aiData.lng;
+        document.getElementById('category').value = aiData.category || 'history';
+        document.getElementById('visit_minutes').value = aiData.visit_minutes || 20;
+        document.getElementById('has_gate').checked = Boolean(aiData.has_gate);
+
+        document.getElementById('gate_1_lat').value = aiData.gate_1_lat || aiData.lat;
+        document.getElementById('gate_1_lng').value = aiData.gate_1_lng || aiData.lng;
+        document.getElementById('gate_1_radius').value = aiData.gate_1_radius || 20;
+
+        document.getElementById('gate_2_lat').value = aiData.gate_2_lat || '';
+        document.getElementById('gate_2_lng').value = aiData.gate_2_lng || '';
+        document.getElementById('gate_2_radius').value = aiData.gate_2_radius || 20;
+
+        document.getElementById('gate_3_lat').value = aiData.gate_3_lat || '';
+        document.getElementById('gate_3_lng').value = aiData.gate_3_lng || '';
+        document.getElementById('gate_3_radius').value = aiData.gate_3_radius || 20;
+
+        document.getElementById('story_summary').value = aiData.story_summary || '';
+        document.getElementById('guide_tips').value = aiData.guide_tips || '';
+        document.getElementById('admin_notes').value = aiData.admin_notes || '';
+
+        document.getElementById('aud_arrival_script').value = aiData.arrival_script || '';
+        document.getElementById('aud_main_script').value = aiData.main_script || '';
+
+        // 낭독 계산기 및 Leaflet 맵 오버레이 즉각 동기화
+        updateSpeechCalc('ko', aiData.arrival_script || '', 'arrival_calc');
+        updateSpeechCalc('ko', aiData.main_script || '', 'main_calc');
+        updatePinFromInputs();
+        updateGateFromInputs(1);
+        updateGateFromInputs(2);
+        updateGateFromInputs(3);
+
+        alert(`[${aiData.name_ko}] Gemini 실시간 생성 및 v4.0 스키마 주입 완료!\n지도 좌표와 낭독 시간이 정상 갱신되었습니다.`);
+      } catch (err) {
+        console.error("Gemini API Error:", err);
+        alert(`Gemini API 통신 실패: ${err.message}\n(API Key가 올바른지 확인해 주세요.)`);
+      } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+      }
+    }
+
+    // 6. 인메모리 5대 마스터 DB 스토어
     let masterDB = {
       POIs: [],
       Audios: [],
@@ -488,7 +635,7 @@
       ]
     };
 
-    // 5. POI 저장 (Audios 양방향 바인딩 및 비공개 admin_notes 보존)
+    // 7. POI 저장 (Audios 양방향 바인딩 및 비공개 admin_notes 보존)
     function saveCurrentPoi() {
       const slug = document.getElementById('slug').value.trim();
       if (!slug) {
@@ -523,7 +670,7 @@
         status: document.getElementById('status').value
       };
 
-      // 2) Audios 단일 원천 레코드 구성 (양방향 바인딩: arrival, main)
+      // 2) Audios 단일 원천 레코드 구성 (도착 안내 / 본해설)
       const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9_]/g, '_');
       const arrivalScript = document.getElementById('aud_arrival_script').value;
       const mainScript = document.getElementById('aud_main_script').value;
@@ -550,17 +697,16 @@
         file_path: `audio/aud_${cleanSlug}_ko_main.mp3`
       };
 
-      // 마스터 저장소 중복 업데이트 방지 처리
       masterDB.POIs = masterDB.POIs.filter(p => p.poi_id !== poi_id);
       masterDB.POIs.push(poiRecord);
 
       masterDB.Audios = masterDB.Audios.filter(a => a.poi_id !== poi_id);
       masterDB.Audios.push(audioArrival, audioMain);
 
-      alert(`[${poiRecord.name_ko}] POI 및 Audios 마스터가 스키마 v4.0 규격으로 정상 저장되었습니다.`);
+      alert(`[${poiRecord.name_ko}] POI 및 Audios 마스터가 스키마 v4.0 규격으로 정상 저장되었습니다.\n(현재 보관 중인 POI: ${masterDB.POIs.length}개)`);
     }
 
-    // 6. 성우/TTS 큐시트 CSV 내보내기 ([그리팅 ➔ 도착 안내 ➔ 본해설 ➔ 이동 큐] 순차 정렬)
+    // 8. 성우/TTS 큐시트 CSV 내보내기 ([그리팅 ➔ 도착 안내 ➔ 본해설 ➔ 이동 큐] 순차 정렬)
     function exportCueSheetCSV() {
       if (masterDB.Audios.length === 0) {
         alert('내보낼 오디오 데이터가 없습니다. 먼저 POI 저장을 완료해주세요.');
@@ -587,7 +733,7 @@
       document.body.removeChild(link);
     }
 
-    // 7. 5대 마스터 JSON 내보내기 (v4.0 전체 구조)
+    // 9. 5대 마스터 JSON 내보내기 (v4.0 전체 구조 백업)
     function exportMasterJSON() {
       if (masterDB.POIs.length === 0) {
         alert('내보낼 마스터 데이터가 없습니다. 먼저 [현재 POI 저장]을 실행해 주세요.');
@@ -602,75 +748,7 @@
       downloadAnchor.remove();
     }
 
-    // 8. AI 자동 완성 연동 시뮬레이터 (표준 JSON 규격 1회 호출 주입)
-    function simulateAiGeneration() {
-      const name = document.getElementById('name_ko').value || "세인트 폴 대성당";
-      alert(`[AI 자동 완성 엔진 가동]\n'${name}'에 대한 마스터 메타데이터 및 낭독 대본 초안을 스키마 v4.0 규격으로 자동 주입합니다.`);
-
-      const aiResponse = {
-        slug: "st_pauls_cathedral",
-        name_ko: "세인트 폴 대성당",
-        name_en: "St Paul's Cathedral",
-        lat: -37.8170,
-        lng: 144.9676,
-        category: "history",
-        visit_minutes: 25,
-        has_gate: true,
-        gate_1_lat: -37.8168,
-        gate_1_lng: 144.9674,
-        gate_1_radius: 20,
-        gate_2_lat: -37.8172,
-        gate_2_lng: 144.9678,
-        gate_2_radius: 20,
-        gate_3_lat: null,
-        gate_3_lng: null,
-        gate_3_radius: null,
-        story_summary: "1891년에 완공된 멜버른 성공회를 대표하는 네오고딕 양식의 대성당입니다. 윌리엄 버터필드가 설계한 갈색 사암 외관과 정교한 스테인드글라스 창문이 고풍스러운 분위기를 자아냅니다.",
-        guide_tips: "성당 내부 촬영 시에는 입구 안내 데스크에서 작은 촬영 허가 스티커를 확인해 주세요. 제단 방향 중앙 통로에 서서 파이프 오르간을 바라보는 뷰가 압권입니다.",
-        admin_notes: "성당 정문 앞 스완스톤 스트리트는 트램 및 보행자 전용 지구로 일반 차량 진입이 불가함. 미사 시간 중 단체 관광객 입장 제한.",
-        arrival_script: "플린더스 역 대각선 맞은편, 웅장한 사암 첨탑이 돋보이는 세인트 폴 대성당에 도착하셨습니다. 성당 정문 계단 쪽으로 천천히 발걸음을 옮겨주세요.",
-        main_script: "이 성당은 멜버른 중심부에서 가장 오래된 고딕 양식 건축물 중 하나입니다. 갈색과 황금빛 사암으로 지어진 외벽은 영국의 대표적 건축가 윌리엄 버터필드의 걸작으로 꼽히죠. 실내로 들어서시면 웅장한 파이프 오르간과 벽면을 가득 채운 화려한 스테인드글라스가 방문객을 맞이합니다. 도심의 번잡함을 벗어나 100년 전의 고요한 숨결을 느껴보시기 바랍니다."
-      };
-
-      document.getElementById('slug').value = aiResponse.slug;
-      handleSlugChange(aiResponse.slug);
-      
-      document.getElementById('name_ko').value = aiResponse.name_ko;
-      document.getElementById('name_en').value = aiResponse.name_en;
-      document.getElementById('lat').value = aiResponse.lat;
-      document.getElementById('lng').value = aiResponse.lng;
-      document.getElementById('category').value = aiResponse.category;
-      document.getElementById('visit_minutes').value = aiResponse.visit_minutes;
-      document.getElementById('has_gate').checked = aiResponse.has_gate;
-      
-      document.getElementById('gate_1_lat').value = aiResponse.gate_1_lat;
-      document.getElementById('gate_1_lng').value = aiResponse.gate_1_lng;
-      document.getElementById('gate_1_radius').value = aiResponse.gate_1_radius;
-      
-      document.getElementById('gate_2_lat').value = aiResponse.gate_2_lat || '';
-      document.getElementById('gate_2_lng').value = aiResponse.gate_2_lng || '';
-      document.getElementById('gate_2_radius').value = aiResponse.gate_2_radius || 20;
-
-      document.getElementById('gate_3_lat').value = aiResponse.gate_3_lat || '';
-      document.getElementById('gate_3_lng').value = aiResponse.gate_3_lng || '';
-      document.getElementById('gate_3_radius').value = aiResponse.gate_3_radius || 20;
-
-      document.getElementById('story_summary').value = aiResponse.story_summary;
-      document.getElementById('guide_tips').value = aiResponse.guide_tips;
-      document.getElementById('admin_notes').value = aiResponse.admin_notes;
-
-      document.getElementById('aud_arrival_script').value = aiResponse.arrival_script;
-      document.getElementById('aud_main_script').value = aiResponse.main_script;
-
-      updateSpeechCalc('ko', aiResponse.arrival_script, 'arrival_calc');
-      updateSpeechCalc('ko', aiResponse.main_script, 'main_calc');
-      updatePinFromInputs();
-      updateGateFromInputs(1);
-      updateGateFromInputs(2);
-      updateGateFromInputs(3);
-    }
-
-    // 초기화 및 이벤트 리스너 등록
+    // 초기화
     window.addEventListener('DOMContentLoaded', () => {
       handleSlugChange(document.getElementById('slug').value);
       updateSpeechCalc('ko', document.getElementById('aud_arrival_script').value, 'arrival_calc');
