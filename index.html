@@ -338,7 +338,7 @@
      * 절대 불변 원칙 및 5대 마스터 스키마 정합성 보장
      */
 
-    // 1. 실시간 낭독 시간 계산 엔진 (불변 공식)
+    // 1. 실시간 낭독 시간 계산 엔진 (한국어 공백제외÷5.2, 영어 단어수÷2.3)
     function calculateSpeechDuration(text, lang) {
       if (!lang) lang = 'ko';
       if (!text || typeof text !== 'string') return { count: 0, seconds: 0 };
@@ -386,7 +386,7 @@
       }
     }
 
-    // 3. 인메모리 5대 마스터 DB 스토어 (v4.0 규격 보존)
+    // 3. 인메모리 5대 마스터 DB 스토어 (v4.0 규격 완벽 보존)
     let masterDB = {
       POIs: [],
       Audios: [],
@@ -412,7 +412,7 @@
       ]
     };
 
-    // 4. Leaflet 맵 & 지오펜스 오버레이 (워터마크 완전 배제 및 즉각 반응)
+    // 4. Leaflet 맵 & 지오펜스 오버레이 (CartoDB 완전 배제 -> ESRI World Gray Canvas 적용)
     let map = null, mainMarker = null;
     const gateLayers = {
       1: { circle: null, marker: null },
@@ -429,17 +429,16 @@
         const initLat = parseFloat(document.getElementById('lat').value) || -37.8180;
         const initLng = parseFloat(document.getElementById('lng').value) || 144.9671;
 
-        // 레이어 1: 상세 골목길 & 루트 파악 레이어 (OSM France)
+        // 레이어 1: 상세 골목길 & 루트 파악 레이어 (OSM France - 보행자 골목, 화장실 완벽 식별)
         const detailedLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
           maxZoom: 20,
           attribution: '&copy; OpenStreetMap France'
         });
 
-        // 레이어 2: 게이트 집중 모드 (CartoDB No-Labels 오픈 미러 - 워터마크 없음, API Key 영구 불필요, 줌 19 지원)
-        const cleanLayer = L.tileLayer('https://a.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}@2x.png', {
-          maxZoom: 19,
-          subdomains: 'abcd',
-          attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+        // 레이어 2: 게이트 집중 모드 (ESRI World Gray Canvas - API Key 영구 불필요, 워터마크 0%, 게이트 시인성 극대화)
+        const cleanLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+          maxZoom: 18,
+          attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
         });
 
         map = L.map('map', {
@@ -609,7 +608,7 @@
       }
     }
 
-    // 7. 실시간 Gemini API 통신 엔진 (다중 모델 503 트래픽 자동 우회 체인)
+    // 7. 실시간 Gemini API 통신 엔진 (다중 모델 자동 우회: 2.5-flash -> 2.5-flash-lite -> 2.5-pro)
     async function generateWithGemini() {
       const apiKey = localStorage.getItem('GEMINI_API_KEY');
       if (!apiKey) {
