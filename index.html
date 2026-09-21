@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Melbourne & Outdoors Audio Guide - Admin CMS v4.0</title>
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <style>
+    :root {
+      --primary: #1a73e8;
+      --primary-hover: #1557b0;
+      --bg-gray: #f8f9fa;
+      --border-color: #dadce0;
+      --text-main: #202124;
+      --text-muted: #5f6368;
+      --gate1-color: #1a73e8;
+      --gate2-color: #34a853;
+      --gate3-color: #e37400;
+      --danger: #d93025;
+      --warning-bg: #fef7e0;
+      --warning-border: #f9ab00;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: var(--text-main); background: var(--bg-gray); }
+    
+    header { background: #fff; border-bottom: 1px solid var(--border-color); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+    header h1 { font-size: 1.15rem; font-weight: 700; color: #111; display: flex; align-items: center; gap: 8px; }
+    header .badge { font-size: 0.75rem; background: #e8f0fe; color: var(--primary); padding: 3px 8px; border-radius: 12px; font-weight: 600; }
+    
+    .container { display: grid; grid-template-columns: 580px 1fr; height: calc(100vh - 58px); }
+    
+    /* 좌측 폼 패널 */
+    .form-panel { background: #fff; border-right: 1px solid var(--border-color); overflow-y: auto; padding: 20px 24px; }
+    .section-title { font-size: 0.95rem; font-weight: 700; border-bottom: 2px solid var(--primary); padding-bottom: 6px; margin: 24px 0 14px; display: flex; justify-content: space-between; align-items: center; }
+    .section-title:first-child { margin-top: 0; }
+    
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--text-muted); }
+    .form-control { width: 100%; padding: 8px 10px; font-size: 0.85rem; border: 1px solid var(--border-color); border-radius: 4px; background: #fff; transition: border-color 0.2s; }
+    .form-control:focus { border-color: var(--primary); outline: none; }
+    .form-control[readonly] { background: #f1f3f4; cursor: not-allowed; }
+    textarea.form-control { resize: vertical; min-height: 75px; line-height: 1.45; }
+    
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    
+    /* 게이트 카드 디자인 */
+    .gate-card { background: var(--bg-gray); border: 1px solid var(--border-color); border-radius: 4px; padding: 12px; margin-bottom: 10px; transition: opacity 0.2s; }
+    .gate-card.gate-1 { border-left: 4px solid var(--gate1-color); }
+    .gate-card.gate-2 { border-left: 4px solid var(--gate2-color); }
+    .gate-card.gate-3 { border-left: 4px solid var(--gate3-color); }
+    .gate-card h4 { font-size: 0.82rem; font-weight: 700; margin-bottom: 8px; display: flex; justify-content: space-between; }
+    
+    /* 오디오 바인딩 카드 & 낭독 카운터 */
+    .audio-card { background: #fcfdfe; border: 1px solid #d2e3fc; border-radius: 4px; padding: 14px; margin-bottom: 14px; }
+    .audio-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .audio-tag { font-size: 0.75rem; background: #e8f0fe; color: var(--primary); padding: 3px 8px; border-radius: 4px; font-weight: 700; }
+    .speech-indicator { font-size: 0.78rem; font-weight: bold; color: var(--danger); }
+    .audio-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; font-family: monospace; }
+    
+    /* 비공개 관리자 노트 */
+    .admin-notes-card { background: var(--warning-bg); border: 1px solid var(--warning-border); padding: 12px; border-radius: 4px; }
+    
+    /* 우측 맵 & 도구 패널 */
+    .map-panel { display: flex; flex-direction: column; height: 100%; position: relative; }
+    #map { flex: 1; z-index: 1; }
+    
+    .map-controls-overlay { position: absolute; bottom: 24px; left: 16px; z-index: 1000; background: rgba(255,255,255,0.95); padding: 10px 14px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-size: 0.8rem; pointer-events: auto; }
+    .map-legend { display: flex; gap: 12px; margin-top: 6px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; }
+    .legend-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+    
+    .action-bar { background: #fff; border-top: 1px solid var(--border-color); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 2; }
+    
+    /* 버튼 스타일 */
+    .btn { padding: 8px 14px; border-radius: 4px; border: 1px solid transparent; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.15s ease-in-out; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline { background: #fff; border-color: var(--border-color); color: var(--text-main); }
+    .btn-outline:hover { background: #f1f3f4; }
+    .btn-ai { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; }
+    .btn-ai:hover { opacity: 0.92; }
+    .btn-export { background: #188038; color: white; }
+    .btn-export:hover { background: #137333; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Melbourne & Outdoors Audio Guide <span class="badge">어드민 CMS v4.0</span></h1>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-ai" onclick="simulateAiGeneration()">✨ AI 원클릭 초안 자동 완성</button>
+      <button class="btn btn-export" onclick="exportCueSheetCSV()">🎧 성우/TTS 큐시트(CSV)</button>
+      <button class="btn btn-outline" onclick="exportMasterJSON()">📦 마스터 JSON 내보내기</button>
+      <button class="btn btn-primary" onclick="saveCurrentPoi()">💾 현재 POI 저장</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- 좌측 폼 패널 -->
+    <div class="form-panel">
+      
+      <!-- 1. POI 기본 정보 (POIs Master) -->
+      <div class="section-title">
+        <span>1. POI 기본 정보 (POIs Master)</span>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">* 표시는 필수</span>
+      </div>
+      
+      <div class="grid-2">
+        <div class="form-group">
+          <label>POI ID (자동 생성: poi_{slug}) *</label>
+          <input type="text" id="poi_id" class="form-control" readonly placeholder="poi_flinders_station">
+        </div>
+        <div class="form-group">
+          <label>Slug (소문자 스네이크 케이스) *</label>
+          <input type="text" id="slug" class="form-control" placeholder="flinders_station" value="flinders_station" oninput="handleSlugChange(this.value)">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label>명소 명칭 (한국어: name_ko) *</label>
+          <input type="text" id="name_ko" class="form-control" placeholder="플린더스 스트리트 역" value="플린더스 스트리트 역">
+        </div>
+        <div class="form-group">
+          <label>명소 명칭 (영어: name_en) *</label>
+          <input type="text" id="name_en" class="form-control" placeholder="Flinders Street Railway Station" value="Flinders Street Railway Station">
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="form-group">
+          <label>카테고리 (category)</label>
+          <select id="category" class="form-control">
+            <option value="history" selected>역사/건축</option>
+            <option value="nature">자연/공원</option>
+            <option value="culture">문화/예술</option>
+            <option value="scenic">전망/스팟</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>권장 체류(분: visit_minutes)</label>
+          <input type="number" id="visit_minutes" class="form-control" value="20">
+        </div>
+        <div class="form-group">
+          <label>배포 상태 (status)</label>
+          <select id="status" class="form-control">
+            <option value="draft">draft</option>
+            <option value="ready" selected>ready</option>
+            <option value="published">published</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label>대표 위도 (lat) *</label>
+          <input type="number" step="0.000001" id="lat" class="form-control" value="-37.8180" oninput="updatePinFromInputs()">
+        </div>
+        <div class="form-group">
+          <label>대표 경도 (lng) *</label>
+          <input type="number" step="0.000001" id="lng" class="form-control" value="144.9671" oninput="updatePinFromInputs()">
+        </div>
+      </div>
+
+      <!-- 2. 지오펜스 센서 (Gate 1~3) -->
+      <div class="section-title">
+        <span>2. 지오펜스 센서 (Gate 1~3)</span>
+      </div>
+      
+      <div class="form-group">
+        <label><input type="checkbox" id="has_gate" checked onchange="toggleGateInputs(this.checked)"> 게이트 센서 활성화 (has_gate)</label>
+      </div>
+
+      <!-- Gate 1 -->
+      <div class="gate-card gate-1" id="gate_1_wrapper">
+        <h4><span>Gate 1 (주 진입로 - 필수)</span> <span style="color:var(--gate1-color)">기본 20m</span></h4>
+        <div class="grid-3">
+          <div class="form-group">
+            <label>Gate 1 Lat</label>
+            <input type="number" step="0.000001" id="gate_1_lat" class="form-control" value="-37.8178" oninput="updateGateFromInputs(1)">
+          </div>
+          <div class="form-group">
+            <label>Gate 1 Lng</label>
+            <input type="number" step="0.000001" id="gate_1_lng" class="form-control" value="144.9668" oninput="updateGateFromInputs(1)">
+          </div>
+          <div class="form-group">
+            <label>Radius (m)</label>
+            <input type="number" id="gate_1_radius" class="form-control" value="20" oninput="updateGateFromInputs(1)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Gate 2 -->
+      <div class="gate-card gate-2" id="gate_2_wrapper">
+        <h4><span>Gate 2 (관통형/보조 진입로 - 선택)</span> <span style="color:var(--gate2-color)">선택</span></h4>
+        <div class="grid-3">
+          <div class="form-group">
+            <label>Gate 2 Lat</label>
+            <input type="number" step="0.000001" id="gate_2_lat" class="form-control" oninput="updateGateFromInputs(2)">
+          </div>
+          <div class="form-group">
+            <label>Gate 2 Lng</label>
+            <input type="number" step="0.000001" id="gate_2_lng" class="form-control" oninput="updateGateFromInputs(2)">
+          </div>
+          <div class="form-group">
+            <label>Radius (m)</label>
+            <input type="number" id="gate_2_radius" class="form-control" value="20" oninput="updateGateFromInputs(2)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Gate 3 -->
+      <div class="gate-card gate-3" id="gate_3_wrapper">
+        <h4><span>Gate 3 (3면 개방형/광장 교차점 - 선택)</span> <span style="color:var(--gate3-color)">선택</span></h4>
+        <div class="grid-3">
+          <div class="form-group">
+            <label>Gate 3 Lat</label>
+            <input type="number" step="0.000001" id="gate_3_lat" class="form-control" oninput="updateGateFromInputs(3)">
+          </div>
+          <div class="form-group">
+            <label>Gate 3 Lng</label>
+            <input type="number" step="0.000001" id="gate_3_lng" class="form-control" oninput="updateGateFromInputs(3)">
+          </div>
+          <div class="form-group">
+            <label>Radius (m)</label>
+            <input type="number" id="gate_3_radius" class="form-control" value="20" oninput="updateGateFromInputs(3)">
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 고객 공개 스토리 및 가이드 -->
+      <div class="section-title">3. 스토리 및 현장 가이드 (Client Side)</div>
+      
+      <div class="form-group">
+        <label>배경 역사 요약 (story_summary: 3~4줄)</label>
+        <textarea id="story_summary" class="form-control">1910년에 완공된 멜버른 최초의 기차역이자 도시를 상징하는 대표 랜드마크입니다. 웅장한 노란색 프렌치 르네상스 양식의 외벽과 청동 돔 지붕이 야라 강변과 조화를 이룹니다.</textarea>
+      </div>
+
+      <div class="form-group">
+        <label>현장 꿀팁 & 포토존 (guide_tips: 시선 유도)</label>
+        <textarea id="guide_tips" class="form-control">시계탑 정면 대각선 방향인 세인트 폴 대성당 앞 계단에 서서 올려다볼 때 가장 웅장한 구도가 나옵니다. 트램이 지나가는 순간을 함께 포착해 보세요.</textarea>
+      </div>
+
+      <!-- 4. Audios 마스터 양방향 바인딩 대본 -->
+      <div class="section-title">
+        <span>4. 연계 오디오 대본 (Audios Master 양방향 바인딩)</span>
+        <span style="font-size: 0.72rem; color: var(--text-muted);">표준: Mono 96kbps MP3</span>
+      </div>
+      
+      <!-- Arrival Audio -->
+      <div class="audio-card">
+        <div class="audio-card-header">
+          <span class="audio-tag">arrival (도착 안내)</span>
+          <span class="speech-indicator" id="arrival_calc">0자 | 예상 0.0초</span>
+        </div>
+        <div class="form-group">
+          <div class="audio-meta" id="aud_arrival_meta">ID: aud_flinders_station_ko_arrival | audio/aud_flinders_station_ko_arrival.mp3</div>
+          <textarea id="aud_arrival_script" class="form-control" style="margin-top:6px;"
+            oninput="updateSpeechCalc('ko', this.value, 'arrival_calc')">멜버른의 심장, 플린더스 스트리트 역에 도착하셨습니다. 정면의 거대한 돔과 아치형 입구 아래 늘어선 클래식한 시계들을 올려다봐 주세요.</textarea>
+        </div>
+      </div>
+
+      <!-- Main Audio -->
+      <div class="audio-card">
+        <div class="audio-card-header">
+          <span class="audio-tag">main (본해설)</span>
+          <span class="speech-indicator" id="main_calc">0자 | 예상 0.0초</span>
+        </div>
+        <div class="form-group">
+          <div class="audio-meta" id="aud_main_meta">ID: aud_flinders_station_ko_main | audio/aud_flinders_station_ko_main.mp3</div>
+          <textarea id="aud_main_script" class="form-control" style="min-height: 110px; margin-top:6px;"
+            oninput="updateSpeechCalc('ko', this.value, 'main_calc')">이 역의 시계탑 아래는 100년 넘게 멜버른 시민들의 대표 약속 장소였습니다. 'I'll meet you under the clocks'라는 유명한 관용구도 여기서 탄생했죠. 지금도 시계 다이얼들은 각 노선별 다음 열차 출발 시각을 아날로그 방식으로 표시하고 있습니다. 건축 당시 공모전을 통해 선정된 독창적인 디자인과 황금빛 벽돌의 조화를 천천히 감상해 보세요.</textarea>
+        </div>
+      </div>
+
+      <!-- 5. 관리자 비공개 데이터 -->
+      <div class="section-title">5. 관리자 비공개 데이터 (admin_notes)</div>
+      <div class="admin-notes-card">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="color: #b78103; font-weight:700;">인솔/주차/안전 메모 (번들 배포 시 고객 앱에서 자동 제외)</label>
+          <textarea id="admin_notes" class="form-control" style="margin-top:4px;">대형 투어 버스는 역 뒤편 야라 강변(Flinders Walk) 임시 정차 구역을 이용할 것. 출퇴근 시간대 보행자 혼잡도가 매우 높으므로 소매치기 주의 안내 필수.</textarea>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 우측 맵 패널 -->
+    <div class="map-panel">
+      <div id="map"></div>
+      
+      <div class="map-controls-overlay">
+        <strong>Geofence Gate Map Controller</strong>
+        <div class="map-legend">
+          <div class="legend-item"><span class="legend-dot" style="background:var(--primary);"></span> 대표좌표 / Gate 1</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--gate2-color);"></span> Gate 2</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--gate3-color);"></span> Gate 3</div>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <div style="font-size: 0.8rem; color: var(--text-muted);">
+          💡 <strong>맵 조작 가이드</strong>: 우측 상단 레이어 버튼으로 [클린 모드 ↔ 편의시설 상세] 전환이 가능하며, 마커 드래그 시 좌표가 자동 갱신됩니다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    /**
+     * Melbourne & Outdoors Audio Guide CMS Engine (v4.0)
+     * 확정 5대 마스터 테이블 스키마 및 원칙 준수
+     */
+
+    // 1. 실시간 낭독 시간 계산 엔진
+    // 한국어: 공백 제외 글자 수 ÷ 5.2 = 초(sec)
+    // 영어: Word Count ÷ 2.3 = 초(sec)
+    function calculateSpeechDuration(text, lang = 'ko') {
+      if (!text || typeof text !== 'string') return { count: 0, seconds: 0 };
+      if (lang === 'ko') {
+        const charCount = text.replace(/\s+/g, '').length;
+        const seconds = Math.round((charCount / 5.2) * 10) / 10;
+        return { count: charCount, seconds };
+      } else {
+        const words = text.trim().split(/\s+/).filter(Boolean);
+        const seconds = Math.round((words.length / 2.3) * 10) / 10;
+        return { count: words.length, seconds };
+      }
+    }
+
+    function updateSpeechCalc(lang, text, targetElementId) {
+      const { count, seconds } = calculateSpeechDuration(text, lang);
+      const label = lang === 'ko' ? `${count}자` : `${count} words`;
+      document.getElementById(targetElementId).innerText = `${label} | 예상 ${seconds}초`;
+    }
+
+    // 2. ID 생성기 및 양방향 동기화
+    function handleSlugChange(slugVal) {
+      const cleanSlug = slugVal.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      document.getElementById('poi_id').value = cleanSlug ? `poi_${cleanSlug}` : '';
+      
+      const arrId = cleanSlug ? `aud_${cleanSlug}_ko_arrival` : 'aud_{slug}_ko_arrival';
+      const mainId = cleanSlug ? `aud_${cleanSlug}_ko_main` : 'aud_{slug}_ko_main';
+      
+      document.getElementById('aud_arrival_meta').innerText = `ID: ${arrId} | audio/${arrId}.mp3`;
+      document.getElementById('aud_main_meta').innerText = `ID: ${mainId} | audio/${mainId}.mp3`;
+    }
+
+    // 3. Leaflet 맵 & 레이어 스위처 & 지오펜스 오버레이 인스턴스
+    let map, mainMarker;
+    const gateLayers = {
+      1: { circle: null, marker: null },
+      2: { circle: null, marker: null },
+      3: { circle: null, marker: null }
+    };
+    const gateColors = { 1: '#1a73e8', 2: '#34a853', 3: '#e37400' };
+
+    function initMap() {
+      const initLat = parseFloat(document.getElementById('lat').value) || -37.8180;
+      const initLng = parseFloat(document.getElementById('lng').value) || 144.9671;
+
+      // 레이어 1: 지오펜스 게이트 작업에 최적화된 클린 레이어 (Standard OSM - 시각적 노이즈 최소화)
+      const cleanLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      });
+
+      // 레이어 2: 현장 가이드 및 편의시설(화장실, 주차장, 카페 등) 상세 레이어 (OSM France)
+      const detailedLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+        maxZoom: 20,
+        attribution: '&copy; OpenStreetMap France | &copy; OpenStreetMap'
+      });
+
+      // 기본 레이어로 detailedLayer(현재 보시던 상세 타일) 세팅
+      map = L.map('map', {
+        center: [initLat, initLng],
+        zoom: 17,
+        layers: [detailedLayer]
+      });
+
+      // 우측 상단 레이어 전환 컨트롤러 (클린 맵 vs 편의시설 상세 맵)
+      const baseMaps = {
+        "상세 편의시설 모드 (화장실/주차/카페)": detailedLayer,
+        "클린 모드 (게이트 지오펜싱 집중)": cleanLayer
+      };
+      L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
+
+      // 대표 POI 마커 생성 (드래그 가능)
+      mainMarker = L.marker([initLat, initLng], { draggable: true, title: "대표 POI 좌표" }).addTo(map);
+      mainMarker.on('dragend', function (e) {
+        const pos = e.target.getLatLng();
+        document.getElementById('lat').value = pos.lat.toFixed(6);
+        document.getElementById('lng').value = pos.lng.toFixed(6);
+      });
+
+      // Gate 1~3 초기 오버레이 세팅
+      updateGateFromInputs(1);
+      updateGateFromInputs(2);
+      updateGateFromInputs(3);
+    }
+
+    function setupGateVisual(gateNum, lat, lng, radius) {
+      if (gateLayers[gateNum].circle) map.removeLayer(gateLayers[gateNum].circle);
+      if (gateLayers[gateNum].marker) map.removeLayer(gateLayers[gateNum].marker);
+
+      if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+
+      // Gate 반경 원형 시각화
+      const circle = L.circle([lat, lng], {
+        color: gateColors[gateNum],
+        fillColor: gateColors[gateNum],
+        fillOpacity: 0.22,
+        weight: 2,
+        radius: radius || 20
+      }).addTo(map);
+
+      // Gate 중심 핀 마커 (드래그하여 게이트 위치 변경 가능)
+      const gateMarker = L.circleMarker([lat, lng], {
+        radius: 6,
+        color: '#fff',
+        fillColor: gateColors[gateNum],
+        fillOpacity: 1,
+        weight: 2
+      }).addTo(map);
+
+      gateLayers[gateNum].circle = circle;
+      gateLayers[gateNum].marker = gateMarker;
+    }
+
+    function updatePinFromInputs() {
+      const lat = parseFloat(document.getElementById('lat').value);
+      const lng = parseFloat(document.getElementById('lng').value);
+      if (!isNaN(lat) && !isNaN(lng) && mainMarker) {
+        mainMarker.setLatLng([lat, lng]);
+        map.panTo([lat, lng]);
+      }
+    }
+
+    function updateGateFromInputs(num) {
+      const lat = parseFloat(document.getElementById(`gate_${num}_lat`).value);
+      const lng = parseFloat(document.getElementById(`gate_${num}_lng`).value);
+      const radius = parseFloat(document.getElementById(`gate_${num}_radius`).value) || 20;
+
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setupGateVisual(num, lat, lng, radius);
+      } else {
+        if (gateLayers[num].circle) map.removeLayer(gateLayers[num].circle);
+        if (gateLayers[num].marker) map.removeLayer(gateLayers[num].marker);
+      }
+    }
+
+    function toggleGateInputs(checked) {
+      [1, 2, 3].forEach(num => {
+        document.getElementById(`gate_${num}_wrapper`).style.opacity = checked ? '1' : '0.4';
+      });
+    }
+
+    // 4. 인메모리 5대 마스터 DB 스토어 (스키마 v4.0 완벽 준수)
+    let masterDB = {
+      POIs: [],
+      Audios: [],
+      Media: [],
+      Tours: [
+        {
+          tour_id: "tour_walk_melbourne_highlights_ko",
+          travel_mode: "walk",
+          title: "멜버른 시티 하이라이트 도보 투어",
+          estimated_min: 120,
+          distance_km: 3.5,
+          route_file: "routes/tour_walk_melbourne_highlights_ko.geojson"
+        }
+      ],
+      Tour_Stops: [
+        {
+          tour_id: "tour_walk_melbourne_highlights_ko",
+          seq: 1,
+          poi_id: "poi_flinders_station",
+          trigger_gate: "gate_1",
+          departure_audio_id: "aud_step1_to_2_ko_departure"
+        }
+      ]
+    };
+
+    // 5. POI 저장 (Audios 양방향 바인딩 및 관리자 노트 격리)
+    function saveCurrentPoi() {
+      const slug = document.getElementById('slug').value.trim();
+      if (!slug) {
+        alert('Slug는 필수 입력값입니다 (예: flinders_station)');
+        return;
+      }
+
+      const poi_id = document.getElementById('poi_id').value;
+
+      // 1) POIs 마스터 레코드 구성
+      const poiRecord = {
+        poi_id: poi_id,
+        name_ko: document.getElementById('name_ko').value,
+        name_en: document.getElementById('name_en').value,
+        lat: parseFloat(document.getElementById('lat').value),
+        lng: parseFloat(document.getElementById('lng').value),
+        category: document.getElementById('category').value,
+        visit_minutes: parseInt(document.getElementById('visit_minutes').value, 10),
+        has_gate: document.getElementById('has_gate').checked,
+        gate_1_lat: parseFloat(document.getElementById('gate_1_lat').value) || null,
+        gate_1_lng: parseFloat(document.getElementById('gate_1_lng').value) || null,
+        gate_1_radius: parseFloat(document.getElementById('gate_1_radius').value) || null,
+        gate_2_lat: parseFloat(document.getElementById('gate_2_lat').value) || null,
+        gate_2_lng: parseFloat(document.getElementById('gate_2_lng').value) || null,
+        gate_2_radius: parseFloat(document.getElementById('gate_2_radius').value) || null,
+        gate_3_lat: parseFloat(document.getElementById('gate_3_lat').value) || null,
+        gate_3_lng: parseFloat(document.getElementById('gate_3_lng').value) || null,
+        gate_3_radius: parseFloat(document.getElementById('gate_3_radius').value) || null,
+        story_summary: document.getElementById('story_summary').value,
+        guide_tips: document.getElementById('guide_tips').value,
+        admin_notes: document.getElementById('admin_notes').value,
+        status: document.getElementById('status').value
+      };
+
+      // 2) Audios 단일 원천 레코드 구성 (양방향 바인딩: 도착/본해설)
+      const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const arrivalScript = document.getElementById('aud_arrival_script').value;
+      const mainScript = document.getElementById('aud_main_script').value;
+
+      const audioArrival = {
+        audio_id: `aud_${cleanSlug}_ko_arrival`,
+        poi_id: poi_id,
+        tour_id: null,
+        lang: 'ko',
+        segment: 'arrival',
+        title: `${poiRecord.name_ko} 도착 안내`,
+        script: arrivalScript,
+        file_path: `audio/aud_${cleanSlug}_ko_arrival.mp3`
+      };
+
+      const audioMain = {
+        audio_id: `aud_${cleanSlug}_ko_main`,
+        poi_id: poi_id,
+        tour_id: null,
+        lang: 'ko',
+        segment: 'main',
+        title: `${poiRecord.name_ko} 본해설`,
+        script: mainScript,
+        file_path: `audio/aud_${cleanSlug}_ko_main.mp3`
+      };
+
+      // 마스터 저장소 중복 업데이트 방지 처리
+      masterDB.POIs = masterDB.POIs.filter(p => p.poi_id !== poi_id);
+      masterDB.POIs.push(poiRecord);
+
+      masterDB.Audios = masterDB.Audios.filter(a => a.poi_id !== poi_id);
+      masterDB.Audios.push(audioArrival, audioMain);
+
+      alert(`[${poiRecord.name_ko}] POI 및 Audios 마스터가 스키마 v4.0 규격으로 정상 저장되었습니다.`);
+    }
+
+    // 6. 성우/TTS 큐시트 CSV 내보내기 ([그리팅 ➔ 도착 안내 ➔ 본해설 ➔ 이동 큐] 순차 정렬)
+    function exportCueSheetCSV() {
+      if (masterDB.Audios.length === 0) {
+        alert('내보낼 오디오 데이터가 없습니다. 먼저 POI 저장을 완료해주세요.');
+        return;
+      }
+
+      let csv = "\uFEFF순번,오디오 ID,유형(Segment),언어,제목,예상초,오디오 파일경로,스크립트(대본)\n";
+      
+      const order = { 'greeting': 1, 'arrival': 2, 'main': 3, 'sub': 4, 'departure': 5, 'nav_turn': 6, 'closing': 7 };
+      const sortedAudios = [...masterDB.Audios].sort((a, b) => (order[a.segment] || 99) - (order[b.segment] || 99));
+
+      sortedAudios.forEach((item, index) => {
+        const calc = calculateSpeechDuration(item.script, item.lang);
+        const cleanScript = `"${item.script.replace(/"/g, '""')}"`;
+        csv += `${index + 1},${item.audio_id},${item.segment},${item.lang},"${item.title}",${calc.seconds},${item.file_path},${cleanScript}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `cuesheet_export_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // 7. 5대 마스터 JSON 내보내기 (v4.0 전체 구조)
+    function exportMasterJSON() {
+      if (masterDB.POIs.length === 0) {
+        alert('내보낼 마스터 데이터가 없습니다. 먼저 [현재 POI 저장]을 실행해 주세요.');
+        return;
+      }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(masterDB, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `master_schema_v4_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    // 8. AI 자동 완성 시뮬레이터 (표준 JSON 규격 주입)
+    function simulateAiGeneration() {
+      const name = document.getElementById('name_ko').value || "세인트 폴 대성당";
+      alert(`[AI 자동 완성 엔진 가동]\n'${name}'에 대한 마스터 메타데이터 및 낭독 대본 초안을 스키마 v4.0 규격으로 자동 주입합니다.`);
+
+      const aiResponse = {
+        slug: "st_pauls_cathedral",
+        name_ko: "세인트 폴 대성당",
+        name_en: "St Paul's Cathedral",
+        lat: -37.8170,
+        lng: 144.9676,
+        category: "history",
+        visit_minutes: 25,
+        has_gate: true,
+        gate_1_lat: -37.8168,
+        gate_1_lng: 144.9674,
+        gate_1_radius: 20,
+        gate_2_lat: -37.8172,
+        gate_2_lng: 144.9678,
+        gate_2_radius: 20,
+        gate_3_lat: null,
+        gate_3_lng: null,
+        gate_3_radius: null,
+        story_summary: "1891년에 완공된 멜버른 성공회를 대표하는 네오고딕 양식의 대성당입니다. 윌리엄 버터필드가 설계한 갈색 사암 외관과 정교한 스테인드글라스 창문이 고풍스러운 분위기를 자아냅니다.",
+        guide_tips: "성당 내부 촬영 시에는 입구 안내 데스크에서 작은 촬영 허가 스티커를 확인해 주세요. 제단 방향 중앙 통로에 서서 파이프 오르간을 바라보는 뷰가 압권입니다.",
+        admin_notes: "성당 정문 앞 스완스톤 스트리트는 트램 및 보행자 전용 지구로 일반 차량 진입이 불가함. 미사 시간 중 단체 관광객 입장 제한.",
+        arrival_script: "플린더스 역 대각선 맞은편, 웅장한 사암 첨탑이 돋보이는 세인트 폴 대성당에 도착하셨습니다. 성당 정문 계단 쪽으로 천천히 발걸음을 옮겨주세요.",
+        main_script: "이 성당은 멜버른 중심부에서 가장 오래된 고딕 양식 건축물 중 하나입니다. 갈색과 황금빛 사암으로 지어진 외벽은 영국의 대표적 건축가 윌리엄 버터필드의 걸작으로 꼽히죠. 실내로 들어서시면 웅장한 파이프 오르간과 벽면을 가득 채운 화려한 스테인드글라스가 방문객을 맞이합니다. 도심의 번잡함을 벗어나 100년 전의 고요한 숨결을 느껴보시기 바랍니다."
+      };
+
+      // 폼 바인딩
+      document.getElementById('slug').value = aiResponse.slug;
+      handleSlugChange(aiResponse.slug);
+      
+      document.getElementById('name_ko').value = aiResponse.name_ko;
+      document.getElementById('name_en').value = aiResponse.name_en;
+      document.getElementById('lat').value = aiResponse.lat;
+      document.getElementById('lng').value = aiResponse.lng;
+      document.getElementById('category').value = aiResponse.category;
+      document.getElementById('visit_minutes').value = aiResponse.visit_minutes;
+      document.getElementById('has_gate').checked = aiResponse.has_gate;
+      
+      document.getElementById('gate_1_lat').value = aiResponse.gate_1_lat;
+      document.getElementById('gate_1_lng').value = aiResponse.gate_1_lng;
+      document.getElementById('gate_1_radius').value = aiResponse.gate_1_radius;
+      
+      document.getElementById('gate_2_lat').value = aiResponse.gate_2_lat || '';
+      document.getElementById('gate_2_lng').value = aiResponse.gate_2_lng || '';
+      document.getElementById('gate_2_radius').value = aiResponse.gate_2_radius || 20;
+
+      document.getElementById('gate_3_lat').value = aiResponse.gate_3_lat || '';
+      document.getElementById('gate_3_lng').value = aiResponse.gate_3_lng || '';
+      document.getElementById('gate_3_radius').value = aiResponse.gate_3_radius || 20;
+
+      document.getElementById('story_summary').value = aiResponse.story_summary;
+      document.getElementById('guide_tips').value = aiResponse.guide_tips;
+      document.getElementById('admin_notes').value = aiResponse.admin_notes;
+
+      document.getElementById('aud_arrival_script').value = aiResponse.arrival_script;
+      document.getElementById('aud_main_script').value = aiResponse.main_script;
+
+      // 낭독 계산기 및 맵 오버레이 실시간 갱신
+      updateSpeechCalc('ko', aiResponse.arrival_script, 'arrival_calc');
+      updateSpeechCalc('ko', aiResponse.main_script, 'main_calc');
+      updatePinFromInputs();
+      updateGateFromInputs(1);
+      updateGateFromInputs(2);
+      updateGateFromInputs(3);
+    }
+
+    // 페이지 로드 시 구동
+    window.addEventListener('DOMContentLoaded', () => {
+      handleSlugChange(document.getElementById('slug').value);
+      updateSpeechCalc('ko', document.getElementById('aud_arrival_script').value, 'arrival_calc');
+      updateSpeechCalc('ko', document.getElementById('aud_main_script').value, 'main_calc');
+      initMap();
+    });
+  </script>
+</body>
+</html>
