@@ -65,7 +65,7 @@
     /* 비공개 관리자 노트 */
     .admin-notes-card { background: var(--warning-bg); border: 1px solid var(--warning-border); padding: 12px; border-radius: 4px; }
     
-    /* 우측 맵 패널 (단일 통합 고화질 OSM France 맵) */
+    /* 우측 맵 패널 */
     .map-panel { display: flex; flex-direction: column; height: 100%; position: relative; }
     #map { flex: 1; z-index: 1; }
     
@@ -125,7 +125,7 @@
         </select>
       </div>
 
-      <!-- 1. POI 기본 정보 (POIs Master) -->
+      <!-- 1. POI 기본 정보 (POIs Master v4.0) -->
       <div class="section-title">
         <span>1. POI 기본 정보 (POIs Master)</span>
         <span style="font-size: 0.75rem; color: var(--text-muted);">* 표시는 필수</span>
@@ -308,12 +308,12 @@
 
     </div>
 
-    <!-- 우측 맵 패널 (워터마크 완전 박멸: 단일 고화질 OSM France 맵) -->
+    <!-- 우측 맵 패널 (OSM France 단일 통합 맵) -->
     <div class="map-panel">
       <div id="map"></div>
       
       <div class="map-controls-overlay">
-        <strong>Geofence Gate Map Controller (OSM France)</strong>
+        <strong>Geofence Gate Map Controller</strong>
         <div class="map-legend">
           <div class="legend-item"><span class="legend-dot" style="background:var(--primary);"></span> 대표좌표 / Gate 1</div>
           <div class="legend-item"><span class="legend-dot" style="background:var(--gate2-color);"></span> Gate 2</div>
@@ -323,7 +323,7 @@
 
       <div class="action-bar">
         <div style="font-size: 0.8rem; color: var(--text-muted);">
-          💡 <strong>맵 조작 가이드</strong>: 보행자 전용 골목, 아케이드, 화장실이 표기된 단일 고화질 지도이며 마커 및 Gate 1~3 드래그 시 좌표가 실시간 동기화됩니다.
+          💡 <strong>맵 조작 가이드</strong>: 보행자 전용 골목, 아케이드, 화장실이 표기된 단일 고화질 맵이며 마커 및 Gate 1~3 드래그 시 좌표가 실시간 동기화됩니다.
         </div>
       </div>
     </div>
@@ -338,7 +338,7 @@
      * 절대 불변 원칙 및 5대 마스터 스키마 정합성 보장
      */
 
-    // 1. 실시간 낭독 시간 계산 엔진 (KO: 공백제외÷5.2, EN: 단어수÷2.3)
+    // 1. 실시간 낭독 시간 계산 엔진 (불변 공식)
     function calculateSpeechDuration(text, lang) {
       if (!lang) lang = 'ko';
       if (!text || typeof text !== 'string') return { count: 0, seconds: 0 };
@@ -386,7 +386,7 @@
       }
     }
 
-    // 3. 인메모리 5대 마스터 DB 스토어 (v4.0 규격 완벽 보존)
+    // 3. 인메모리 5대 마스터 DB 스토어 (v4.0 규격 보존)
     let masterDB = {
       POIs: [],
       Audios: [],
@@ -412,7 +412,7 @@
       ]
     };
 
-    // 4. Leaflet 맵 & 지오펜스 오버레이 (단일 고화질 OSM France 전용: 레이어 전환 제거)
+    // 4. Leaflet 맵 & 지오펜스 오버레이 (OSM France 단일 고화질 맵)
     let map = null, mainMarker = null;
     const gateLayers = {
       1: { circle: null, marker: null },
@@ -429,13 +429,11 @@
         const initLat = parseFloat(document.getElementById('lat').value) || -37.8180;
         const initLng = parseFloat(document.getElementById('lng').value) || 144.9671;
 
-        // 안정성과 골목길 식별이 완벽히 검증된 단일 OSM France 레이어
         const osmFranceLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
           maxZoom: 20,
           attribution: '&copy; OpenStreetMap France | &copy; OpenStreetMap'
         });
 
-        // 다중 레이어 스위처 없이 단일 맵으로 직접 초기화
         map = L.map('map', {
           center: [initLat, initLng],
           zoom: 17,
@@ -578,7 +576,7 @@
       alert("입력 폼이 초기화되었습니다.\n[명소 명칭(영어)] 또는 [한국어]를 입력하신 후 [✨ AI 원클릭 초안 자동 완성]을 눌러주세요.");
     }
 
-    // 6. API Key 안전 관리 (localStorage 보관)
+    // 6. API Key 안전 관리
     function configureApiKey() {
       const currentKey = localStorage.getItem('GEMINI_API_KEY') || '';
       const inputKey = prompt(
@@ -597,7 +595,7 @@
       }
     }
 
-    // 7. 최신 공식 모델 지원 Gemini API 통신 엔진 (gemini-3.6-flash -> gemini-3.1-pro-preview Failover)
+    // 7. 실시간 Gemini API 통신 엔진 (무료 티어 할당량 초과 방지를 위해 3.6-flash 단독 고정)
     async function generateWithGemini() {
       const apiKey = localStorage.getItem('GEMINI_API_KEY');
       if (!apiKey) {
@@ -659,40 +657,25 @@
           "  \"main_script\": \"본해설 구어체 대본\"\n" +
           "}";
 
-        // 구글 공식 최신 모델 체인 (3.6-flash -> 3.1-pro-preview)
-        const candidateModels = ['gemini-3.6-flash', 'gemini-3.1-pro-preview'];
-        let response = null;
-        let lastError = null;
+        // 무료 티어 할당량 에러(Pro 모델 제한)를 원천 차단하기 위해 3.6-flash 단독 호출 고정
+        const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent", {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: systemPrompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+              responseMimeType: "application/json"
+            }
+          })
+        });
 
-        for (let i = 0; i < candidateModels.length; i++) {
-          const model = candidateModels[i];
-          try {
-            response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'x-goog-api-key': apiKey
-              },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }],
-                generationConfig: {
-                  temperature: 0.2,
-                  responseMimeType: "application/json"
-                }
-              })
-            });
-
-            if (response.ok) break;
-            const errJson = await response.json();
-            lastError = errJson.error ? errJson.error.message : ("HTTP " + response.status);
-            console.warn(`[${model}] 실패, 다음 모델로 자동 전환:`, lastError);
-          } catch (e) {
-            lastError = e.message;
-          }
-        }
-
-        if (!response || !response.ok) {
-          throw new Error(lastError || "Gemini 통신에 실패했습니다.");
+        if (!response.ok) {
+          const errJson = await response.json();
+          throw new Error(errJson.error ? errJson.error.message : ("HTTP " + response.status));
         }
 
         const resData = await response.json();
