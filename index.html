@@ -595,7 +595,7 @@
       }
     }
 
-    // 7. 실시간 Gemini API 통신 엔진 (5중 지능형 모델 페일오버 체인 적용)
+    // 7. 실시간 Gemini API 통신 엔진 (최신 공식 활성 모델 페일오버 체인 적용)
     async function generateWithGemini() {
       const apiKey = localStorage.getItem('GEMINI_API_KEY');
       if (!apiKey) {
@@ -657,13 +657,11 @@
           "  \"main_script\": \"본해설 구어체 대본\"\n" +
           "}";
 
-        // 5중 지능형 모델 페일오버 체인 (서버 혼잡 503 자동 우회)
+        // 구글 공식 최신 활성 모델 체인 (구형 2.0 라이트 배제, 3.6-flash 및 3.5-flash-lite 적용)
         const candidateModels = [
           'gemini-3.6-flash',
-          'gemini-2.5-flash',
-          'gemini-2.5-flash-lite',
-          'gemini-2.0-flash',
-          'gemini-2.0-flash-lite'
+          'gemini-3.5-flash-lite',
+          'gemini-2.5-flash'
         ];
         let response = null;
         let lastError = null;
@@ -689,14 +687,14 @@
             if (response.ok) break; // 성공 시 즉시 루프 탈출
             const errJson = await response.json();
             lastError = errJson.error ? errJson.error.message : ("HTTP " + response.status);
-            console.warn(`[${model}] 트래픽 혼잡(503) 감지, 다음 가용 모델로 자동 우회합니다:`, lastError);
+            console.warn(`[${model}] 호출 실패, 다음 가용 모델로 자동 전환합니다:`, lastError);
           } catch (e) {
             lastError = e.message;
           }
         }
 
         if (!response || !response.ok) {
-          throw new Error(lastError || "모든 Gemini 가용 모델이 현재 혼잡 상태입니다. 잠시 후 다시 시도해 주세요.");
+          throw new Error(lastError || "모든 Gemini 가용 모델 호출에 실패했습니다. 잠시 후 다시 시도해 주세요.");
         }
 
         const resData = await response.json();
