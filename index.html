@@ -745,7 +745,7 @@
       }
     }
 
-    // 8. POI 저장 (v4.0 스키마 정합성 보장)
+    // 8. POI 저장 (v4.0 스키마 정합성 보장 및 중복 생성 방지 덮어쓰기 로직 적용)
     function saveCurrentPoi() {
       const slug = document.getElementById('slug').value.trim();
       if (!slug) {
@@ -754,12 +754,24 @@
       }
 
       const poi_id = document.getElementById('poi_id').value;
+      const nameKo = document.getElementById('name_ko').value.trim();
+      const nameEn = document.getElementById('name_en').value.trim();
       const now = new Date().toISOString();
 
+      // [중복 방지 검사]: 동일한 poi_id 또는 동일한 명칭(한글/영어)을 가진 기존 POI가 있는지 확인
+      const existingIndex = masterDB.POIs.findIndex(function(p) {
+        return p.poi_id === poi_id || 
+               (nameKo && p.name_ko === nameKo) || 
+               (nameEn && p.name_en && p.name_en.toLowerCase() === nameEn.toLowerCase());
+      });
+
+      // 기존에 존재한다면 해당 ID를 유지하여 덮어쓰기 수행
+      const targetPoiId = existingIndex !== -1 ? masterDB.POIs[existingIndex].poi_id : poi_id;
+
       const poiRecord = {
-        poi_id: poi_id,
-        name_ko: document.getElementById('name_ko').value,
-        name_en: document.getElementById('name_en').value,
+        poi_id: targetPoiId,
+        name_ko: nameKo,
+        name_en: nameEn,
         lat: parseFloat(document.getElementById('lat').value),
         lng: parseFloat(document.getElementById('lng').value),
         category: document.getElementById('category').value,
@@ -781,7 +793,7 @@
         updated_at: now
       };
 
-      const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const cleanSlug = targetPoiId.replace('poi_', '');
       const arrivalScript = document.getElementById('aud_arrival_script').value;
       const mainScript = document.getElementById('aud_main_script').value;
       
@@ -790,7 +802,7 @@
 
       const audioArrival = {
         audio_id: 'aud_' + cleanSlug + '_ko_arrival',
-        poi_id: poi_id,
+        poi_id: targetPoiId,
         tour_id: null,
         lang: 'ko',
         segment: 'arrival',
@@ -804,7 +816,7 @@
 
       const audioMain = {
         audio_id: 'aud_' + cleanSlug + '_ko_main',
-        poi_id: poi_id,
+        poi_id: targetPoiId,
         tour_id: null,
         lang: 'ko',
         segment: 'main',
@@ -816,10 +828,11 @@
         status: 'draft'
       };
 
-      masterDB.POIs = masterDB.POIs.filter(function(p) { return p.poi_id !== poi_id; });
+      // 기존 배열에서 동일 ID 및 연계 오디오 정밀 제거 후 병합
+      masterDB.POIs = masterDB.POIs.filter(function(p) { return p.poi_id !== targetPoiId; });
       masterDB.POIs.push(poiRecord);
 
-      masterDB.Audios = masterDB.Audios.filter(function(a) { return a.poi_id !== poi_id; });
+      masterDB.Audios = masterDB.Audios.filter(function(a) { return a.poi_id !== targetPoiId; });
       masterDB.Audios.push(audioArrival, audioMain);
 
       try {
@@ -829,10 +842,9 @@
       }
 
       updatePoiSelector();
-      document.getElementById('saved_poi_selector').value = poi_id;
-      alert("[" + (poiRecord.name_en || poiRecord.name_ko) + "] 저장 완료!\n(현재 보관 중인 POI: " + masterDB.POIs.length + "개)");
+      document.getElementById('saved_poi_selector').value = targetPoiId;
+      alert("[" + (poiRecord.name_en || poiRecord.name_ko) + "] 저장 완료 (기존 항목 업데이트됨)!\n(현재 보관 중인 POI: " + masterDB.POIs.length + "개)");
     }
-
     // 9. JSON 불러오기 & 목록 동기화
     function handleImportFile(event) {
       const file = event.target.files[0];
