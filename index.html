@@ -338,7 +338,7 @@
      * 절대 불변 원칙 및 5대 마스터 스키마 정합성 보장
      */
 
-    // 1. 실시간 낭독 시간 계산 엔진 (한국어 공백제외÷5.2, 영어 단어수÷2.3)
+    // 1. 실시간 낭독 시간 계산 엔진 (불변 공식)
     function calculateSpeechDuration(text, lang) {
       if (!lang) lang = 'ko';
       if (!text || typeof text !== 'string') return { count: 0, seconds: 0 };
@@ -386,7 +386,7 @@
       }
     }
 
-    // 3. 인메모리 5대 마스터 DB 스토어 (v4.0 규격 완벽 보존)
+    // 3. 인메모리 5대 마스터 DB 스토어 (v4.0 규격 보존)
     let masterDB = {
       POIs: [],
       Audios: [],
@@ -412,7 +412,7 @@
       ]
     };
 
-    // 4. Leaflet 맵 & 지오펜스 오버레이 (ESRI Light Gray Base: API Key 100% 불필요)
+    // 4. Leaflet 맵 & 지오펜스 오버레이 (ESRI Light Gray: 워터마크 없음, API Key 100% 불필요)
     let map = null, mainMarker = null;
     const gateLayers = {
       1: { circle: null, marker: null },
@@ -429,13 +429,13 @@
         const initLat = parseFloat(document.getElementById('lat').value) || -37.8180;
         const initLng = parseFloat(document.getElementById('lng').value) || 144.9671;
 
-        // 레이어 1: 상세 골목길 & 편의시설 모드 (OSM France)
+        // 레이어 1: 상세 골목길 & 루트 파악 레이어 (OSM France)
         const detailedLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
           maxZoom: 20,
           attribution: '&copy; OpenStreetMap France | &copy; OpenStreetMap'
         });
 
-        // 레이어 2: 게이트 집중 모드 (ESRI World Gray Canvas: API Key 영구 불필요, 지오펜스 가독성 극대화)
+        // 레이어 2: 게이트 집중 모드 (ESRI World Light Gray Canvas - 워터마크 없음, API Key 완전 불필요)
         const cleanLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
           maxZoom: 16,
           attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
@@ -608,7 +608,7 @@
       }
     }
 
-    // 7. 실시간 Gemini API 통신 엔진 (최신 gemini-3.6-flash 및 헤더 인증)
+    // 7. 실시간 Gemini API 통신 엔진 (공식 gemini-3.6-flash 및 x-goog-api-key 헤더 인증)
     async function generateWithGemini() {
       const apiKey = localStorage.getItem('GEMINI_API_KEY');
       if (!apiKey) {
@@ -741,7 +741,7 @@
       }
     }
 
-    // 8. POI 저장 (v4.0 스키마 무결성 유지)
+    // 8. POI 저장 (v4.0 스키마 정합성 보장)
     function saveCurrentPoi() {
       const slug = document.getElementById('slug').value.trim();
       if (!slug) {
@@ -922,7 +922,7 @@
       updateGateFromInputs(3);
     }
 
-    // 10. 성우/TTS 큐시트 CSV 내보내기 ([그리팅 ➔ 도착 안내 ➔ 본해설 ➔ 이동 큐] 순차 정렬)
+    // 10. 성우/TTS 큐시트 CSV 내보내기
     function exportCueSheetCSV() {
       if (masterDB.Audios.length === 0) {
         alert('내보낼 오디오 데이터가 없습니다. 먼저 POI 저장을 완료해주세요.');
@@ -951,7 +951,7 @@
       document.body.removeChild(link);
     }
 
-    // 11. 마스터 JSON 내보내기 (v4.0 전체 구조)
+    // 11. 마스터 JSON 내보내기
     function exportMasterJSON() {
       if (masterDB.POIs.length === 0) {
         alert('내보낼 마스터 데이터가 없습니다. 먼저 [현재 POI 저장]을 실행해 주세요.');
