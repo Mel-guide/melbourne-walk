@@ -595,7 +595,7 @@
       }
     }
 
-    // 7. 실시간 Gemini API 통신 엔진 (503 High Demand 자동 우회 3중 페일오버 체인)
+    // 7. 실시간 Gemini API 통신 엔진 (5중 지능형 모델 페일오버 체인 적용)
     async function generateWithGemini() {
       const apiKey = localStorage.getItem('GEMINI_API_KEY');
       if (!apiKey) {
@@ -657,8 +657,14 @@
           "  \"main_script\": \"본해설 구어체 대본\"\n" +
           "}";
 
-        // 트래픽 혼잡(503) 분산을 위한 다중 가용 모델 폴백 체인
-        const candidateModels = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+        // 5중 지능형 모델 페일오버 체인 (서버 혼잡 503 자동 우회)
+        const candidateModels = [
+          'gemini-3.6-flash',
+          'gemini-2.5-flash',
+          'gemini-2.5-flash-lite',
+          'gemini-2.0-flash',
+          'gemini-2.0-flash-lite'
+        ];
         let response = null;
         let lastError = null;
 
@@ -683,7 +689,7 @@
             if (response.ok) break; // 성공 시 즉시 루프 탈출
             const errJson = await response.json();
             lastError = errJson.error ? errJson.error.message : ("HTTP " + response.status);
-            console.warn(`[${model}] 트래픽 혼잡으로 다음 가용 모델로 자동 전환합니다:`, lastError);
+            console.warn(`[${model}] 트래픽 혼잡(503) 감지, 다음 가용 모델로 자동 우회합니다:`, lastError);
           } catch (e) {
             lastError = e.message;
           }
