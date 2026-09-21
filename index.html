@@ -22,7 +22,6 @@
       --danger: #d93025;
       --warning-bg: #fef7e0;
       --warning-border: #f9ab00;
-      --success: #188038;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: var(--text-main); background: var(--bg-gray); }
@@ -95,16 +94,16 @@
   <header>
     <h1>Melbourne & Outdoors Audio Guide <span class="badge">어드민 CMS v4.0</span></h1>
     <div style="display: flex; gap: 8px; align-items: center;">
-      <button class="btn btn-outline" onclick="configureApiKey()">🔑 API Key 설정</button>
-      <button class="btn btn-ai" onclick="generateWithGemini()">✨ AI 원클릭 초안 자동 완성</button>
-      <button class="btn btn-export" onclick="exportCueSheetCSV()">🎧 성우/TTS 큐시트(CSV)</button>
+      <button type="button" class="btn btn-outline" id="btn_config_key">🔑 API Key 설정</button>
+      <button type="button" class="btn btn-ai" id="btn_ai_generate">✨ AI 원클릭 초안 자동 완성</button>
+      <button type="button" class="btn btn-export" id="btn_export_csv">🎧 성우/TTS 큐시트(CSV)</button>
       
-      <!-- [불러오기 / 내보내기 버튼 세트] -->
-      <input type="file" id="import_file_input" accept=".json" style="display: none;" onchange="handleImportFile(event)">
-      <button class="btn btn-outline" onclick="document.getElementById('import_file_input').click()">📂 JSON 불러오기</button>
-      <button class="btn btn-outline" onclick="exportMasterJSON()">📦 마스터 JSON 내보내기</button>
+      <!-- 불러오기 / 내보내기 -->
+      <input type="file" id="import_file_input" accept=".json" style="display: none;">
+      <button type="button" class="btn btn-outline" id="btn_import_json">📂 JSON 불러오기</button>
+      <button type="button" class="btn btn-outline" id="btn_export_json">📦 마스터 JSON 내보내기</button>
       
-      <button class="btn btn-primary" onclick="saveCurrentPoi()">💾 현재 POI 저장</button>
+      <button type="button" class="btn btn-primary" id="btn_save_poi">💾 현재 POI 저장</button>
     </div>
   </header>
 
@@ -112,15 +111,15 @@
     <!-- 좌측 폼 패널 -->
     <div class="form-panel">
       
-      <!-- [상단 작업 컨트롤러: 저장된 POI 선택기 & 신규 입력 버튼] -->
+      <!-- 상단 컨트롤러: 작업 목록 및 신규 입력 -->
       <div style="background: #e8f0fe; padding: 12px; border-radius: 4px; margin-bottom: 18px; border: 1px solid #c2e7ff; display: flex; flex-direction: column; gap: 8px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <label style="color: var(--primary); font-weight: 700; font-size: 0.82rem;">
             📋 작업 중인 POI 목록 (<span id="poi_count_badge">0</span>개 보관 중)
           </label>
-          <button class="btn btn-new" onclick="resetFormToNew()">➕ 신규 입력 (초기화)</button>
+          <button type="button" class="btn btn-new" id="btn_reset_form">➕ 신규 입력 (초기화)</button>
         </div>
-        <select id="saved_poi_selector" class="form-control" onchange="loadPoiIntoForm(this.value)">
+        <select id="saved_poi_selector" class="form-control">
           <option value="">-- 새로 작성 또는 명소 선택 --</option>
         </select>
       </div>
@@ -134,7 +133,7 @@
       <div class="grid-2">
         <div class="form-group">
           <label>명소 명칭 (영어: name_en) [AI 검색 기준 권장] *</label>
-          <input type="text" id="name_en" class="form-control" placeholder="예: State Library Victoria, Puffing Billy..." value="Flinders Street Railway Station" oninput="handleEnglishNameInput(this.value)">
+          <input type="text" id="name_en" class="form-control" placeholder="예: State Library Victoria, Puffing Billy..." value="Flinders Street Railway Station">
         </div>
         <div class="form-group">
           <label>명소 명칭 (한국어: name_ko) *</label>
@@ -149,7 +148,7 @@
         </div>
         <div class="form-group">
           <label>Slug (소문자 스네이크 케이스) *</label>
-          <input type="text" id="slug" class="form-control" placeholder="flinders_station" value="flinders_station" oninput="handleSlugChange(this.value)">
+          <input type="text" id="slug" class="form-control" placeholder="flinders_station" value="flinders_station">
         </div>
       </div>
 
@@ -180,11 +179,11 @@
       <div class="grid-2">
         <div class="form-group">
           <label>대표 위도 (lat) *</label>
-          <input type="number" step="0.000001" id="lat" class="form-control" value="-37.8180" oninput="updatePinFromInputs()">
+          <input type="number" step="0.000001" id="lat" class="form-control" value="-37.8180">
         </div>
         <div class="form-group">
           <label>대표 경도 (lng) *</label>
-          <input type="number" step="0.000001" id="lng" class="form-control" value="144.9671" oninput="updatePinFromInputs()">
+          <input type="number" step="0.000001" id="lng" class="form-control" value="144.9671">
         </div>
       </div>
 
@@ -194,7 +193,7 @@
       </div>
       
       <div class="form-group">
-        <label><input type="checkbox" id="has_gate" checked onchange="toggleGateInputs(this.checked)"> 게이트 센서 활성화 (has_gate)</label>
+        <label><input type="checkbox" id="has_gate" checked> 게이트 센서 활성화 (has_gate)</label>
       </div>
 
       <!-- Gate 1 -->
@@ -203,15 +202,15 @@
         <div class="grid-3">
           <div class="form-group">
             <label>Gate 1 Lat</label>
-            <input type="number" step="0.000001" id="gate_1_lat" class="form-control" value="-37.8178" oninput="updateGateFromInputs(1)">
+            <input type="number" step="0.000001" id="gate_1_lat" class="form-control" value="-37.8178">
           </div>
           <div class="form-group">
             <label>Gate 1 Lng</label>
-            <input type="number" step="0.000001" id="gate_1_lng" class="form-control" value="144.9668" oninput="updateGateFromInputs(1)">
+            <input type="number" step="0.000001" id="gate_1_lng" class="form-control" value="144.9668">
           </div>
           <div class="form-group">
             <label>Radius (m)</label>
-            <input type="number" id="gate_1_radius" class="form-control" value="20" oninput="updateGateFromInputs(1)">
+            <input type="number" id="gate_1_radius" class="form-control" value="20">
           </div>
         </div>
       </div>
@@ -222,15 +221,15 @@
         <div class="grid-3">
           <div class="form-group">
             <label>Gate 2 Lat</label>
-            <input type="number" step="0.000001" id="gate_2_lat" class="form-control" oninput="updateGateFromInputs(2)">
+            <input type="number" step="0.000001" id="gate_2_lat" class="form-control">
           </div>
           <div class="form-group">
             <label>Gate 2 Lng</label>
-            <input type="number" step="0.000001" id="gate_2_lng" class="form-control" oninput="updateGateFromInputs(2)">
+            <input type="number" step="0.000001" id="gate_2_lng" class="form-control">
           </div>
           <div class="form-group">
             <label>Radius (m)</label>
-            <input type="number" id="gate_2_radius" class="form-control" value="20" oninput="updateGateFromInputs(2)">
+            <input type="number" id="gate_2_radius" class="form-control" value="20">
           </div>
         </div>
       </div>
@@ -241,15 +240,15 @@
         <div class="grid-3">
           <div class="form-group">
             <label>Gate 3 Lat</label>
-            <input type="number" step="0.000001" id="gate_3_lat" class="form-control" oninput="updateGateFromInputs(3)">
+            <input type="number" step="0.000001" id="gate_3_lat" class="form-control">
           </div>
           <div class="form-group">
             <label>Gate 3 Lng</label>
-            <input type="number" step="0.000001" id="gate_3_lng" class="form-control" oninput="updateGateFromInputs(3)">
+            <input type="number" step="0.000001" id="gate_3_lng" class="form-control">
           </div>
           <div class="form-group">
             <label>Radius (m)</label>
-            <input type="number" id="gate_3_radius" class="form-control" value="20" oninput="updateGateFromInputs(3)">
+            <input type="number" id="gate_3_radius" class="form-control" value="20">
           </div>
         </div>
       </div>
@@ -281,8 +280,7 @@
         </div>
         <div class="form-group">
           <div class="audio-meta" id="aud_arrival_meta">ID: aud_flinders_station_ko_arrival | audio/aud_flinders_station_ko_arrival.mp3</div>
-          <textarea id="aud_arrival_script" class="form-control" style="margin-top:6px;"
-            oninput="updateSpeechCalc('ko', this.value, 'arrival_calc')">멜버른의 심장, 플린더스 스트리트 역에 도착하셨습니다. 정면의 거대한 돔과 아치형 입구 아래 늘어선 클래식한 시계들을 올려다봐 주세요.</textarea>
+          <textarea id="aud_arrival_script" class="form-control" style="margin-top:6px;">멜버른의 심장, 플린더스 스트리트 역에 도착하셨습니다. 정면의 거대한 돔과 아치형 입구 아래 늘어선 클래식한 시계들을 올려다봐 주세요.</textarea>
         </div>
       </div>
 
@@ -294,8 +292,7 @@
         </div>
         <div class="form-group">
           <div class="audio-meta" id="aud_main_meta">ID: aud_flinders_station_ko_main | audio/aud_flinders_station_ko_main.mp3</div>
-          <textarea id="aud_main_script" class="form-control" style="min-height: 110px; margin-top:6px;"
-            oninput="updateSpeechCalc('ko', this.value, 'main_calc')">이 역의 시계탑 아래는 100년 넘게 멜버른 시민들의 대표 약속 장소였습니다. 'I'll meet you under the clocks'라는 유명한 관용구도 여기서 탄생했죠. 지금도 시계 다이얼들은 각 노선별 다음 열차 출발 시각을 아날로그 방식으로 표시하고 있습니다. 건축 당시 공모전을 통해 선정된 독창적인 디자인과 황금빛 벽돌의 조화를 천천히 감상해 보세요.</textarea>
+          <textarea id="aud_main_script" class="form-control" style="min-height: 110px; margin-top:6px;">이 역의 시계탑 아래는 100년 넘게 멜버른 시민들의 대표 약속 장소였습니다. 'I'll meet you under the clocks'라는 유명한 관용구도 여기서 탄생했죠. 지금도 시계 다이얼들은 각 노선별 다음 열차 출발 시각을 아날로그 방식으로 표시하고 있습니다. 건축 당시 공모전을 통해 선정된 독창적인 디자인과 황금빛 벽돌의 조화를 천천히 감상해 보세요.</textarea>
         </div>
       </div>
 
@@ -337,178 +334,58 @@
   <script>
     /**
      * Melbourne & Outdoors Audio Guide CMS Engine (v4.0)
-     * 확정 5대 마스터 테이블 스키마 및 원칙 준수
+     * 절대 불변 원칙 및 5대 마스터 스키마 정합성 보장
      */
 
-    // 1. 실시간 낭독 시간 계산 엔진
-    function calculateSpeechDuration(text, lang = 'ko') {
+    // 1. 실시간 낭독 시간 계산 엔진 (불변 공식)
+    function calculateSpeechDuration(text, lang) {
+      if (!lang) lang = 'ko';
       if (!text || typeof text !== 'string') return { count: 0, seconds: 0 };
       if (lang === 'ko') {
         const charCount = text.replace(/\s+/g, '').length;
         const seconds = Math.round((charCount / 5.2) * 10) / 10;
-        return { count: charCount, seconds };
+        return { count: charCount, seconds: seconds };
       } else {
         const words = text.trim().split(/\s+/).filter(Boolean);
         const seconds = Math.round((words.length / 2.3) * 10) / 10;
-        return { count: words.length, seconds };
+        return { count: words.length, seconds: seconds };
       }
     }
 
     function updateSpeechCalc(lang, text, targetElementId) {
-      const { count, seconds } = calculateSpeechDuration(text, lang);
-      const label = lang === 'ko' ? `${count}자` : `${count} words`;
-      document.getElementById(targetElementId).innerText = `${label} \vert{} 예상 ${seconds}초`;
+      const calc = calculateSpeechDuration(text, lang);
+      const label = lang === 'ko' ? calc.count + '자' : calc.count + ' words';
+      const el = document.getElementById(targetElementId);
+      if (el) el.innerText = label + ' | 예상 ' + calc.seconds + '초';
     }
 
     // 2. ID 생성기 및 양방향 동기화
     function handleSlugChange(slugVal) {
-      const cleanSlug = slugVal.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-      document.getElementById('poi_id').value = cleanSlug ? `poi_${cleanSlug}` : '';              const arrId = cleanSlug ? `aud_${cleanSlug}_ko_arrival` : 'aud_{slug}_ko_arrival';
-      const mainId = cleanSlug ? `aud_${cleanSlug}_ko_main` : 'aud_{slug}_ko_main';              document.getElementById('aud_arrival_meta').innerText = `ID: ${arrId} | audio/${arrId}.mp3`;       document.getElementById('aud_main_meta').innerText = `ID: ${mainId} | audio/${mainId}.mp3`;     }      // 영문명 입력 시 slug 자동 추천     function handleEnglishNameInput(engVal) {       const currentSlug = document.getElementById('slug').value;       if (!currentSlug \vert{}\vert{} currentSlug === 'flinders_station') {         const autoSlug = engVal.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+\vert{}_+$/g, '');         if (autoSlug) {           document.getElementById('slug').value = autoSlug;           handleSlugChange(autoSlug);         }       }     }      // [신규 기능 1] 화면 입력 필드 전체 공란 초기화     function resetFormToNew() {       document.getElementById('name_en').value = '';       document.getElementById('name_ko').value = '';       document.getElementById('slug').value = '';       document.getElementById('poi_id').value = '';       document.getElementById('category').value = 'history';       document.getElementById('visit_minutes').value = 20;       document.getElementById('status').value = 'draft';       document.getElementById('lat').value = '';       document.getElementById('lng').value = '';        document.getElementById('has_gate').checked = true;       toggleGateInputs(true);       document.getElementById('gate_1_lat').value = '';       document.getElementById('gate_1_lng').value = '';       document.getElementById('gate_1_radius').value = 20;       document.getElementById('gate_2_lat').value = '';       document.getElementById('gate_2_lng').value = '';       document.getElementById('gate_2_radius').value = 20;       document.getElementById('gate_3_lat').value = '';       document.getElementById('gate_3_lng').value = '';       document.getElementById('gate_3_radius').value = 20;        document.getElementById('story_summary').value = '';       document.getElementById('guide_tips').value = '';       document.getElementById('admin_notes').value = '';       document.getElementById('aud_arrival_script').value = '';       document.getElementById('aud_main_script').value = '';        handleSlugChange('');       updateSpeechCalc('ko', '', 'arrival_calc');       updateSpeechCalc('ko', '', 'main_calc');        // 지도 마커 및 게이트 원형 제거       if (mainMarker) {         map.removeLayer(mainMarker);         mainMarker = null;       }       [1, 2, 3].forEach(num => {         if (gateLayers[num].circle) map.removeLayer(gateLayers[num].circle);         if (gateLayers[num].marker) map.removeLayer(gateLayers[num].marker);         gateLayers[num].circle = null;         gateLayers[num].marker = null;       });        document.getElementById('saved_poi_selector').value = '';       document.getElementById('name_en').focus();       alert("입력 폼이 초기화되었습니다.\n[명소 명칭(영어)] 또는 [한국어]를 입력하신 후 [✨ AI 원클릭 초안 자동 완성]을 눌러주세요.");     }      // 3. Leaflet 맵 & 레이어 스위처 & 지오펜스 오버레이 인스턴스     let map, mainMarker;     const gateLayers = {       1: { circle: null, marker: null },       2: { circle: null, marker: null },       3: { circle: null, marker: null }     };     const gateColors = { 1: '#1a73e8', 2: '#34a853', 3: '#e37400' };      function initMap() {       const initLat = parseFloat(document.getElementById('lat').value) \vert{}\vert{} -37.8180;       const initLng = parseFloat(document.getElementById('lng').value) \vert{}\vert{} 144.9671;        // 레이어 1: 상세 골목길 & 루트 파악 레이어 (OSM France - 보행자 골목, 아케이드, 화장실 완벽 식별)       const detailedLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {         maxZoom: 20,         attribution: '&copy; OpenStreetMap France \vert{} &copy; OpenStreetMap'       });        // 레이어 2: 게이트 집중 모드 (CartoDB Light - 상점 노이즈 100\% 제거, Gate 1~3 지오펜싱 정밀 조작)       const cleanLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {         maxZoom: 20,         subdomains: 'abcd',         attribution: '&copy; OpenStreetMap contributors &copy; CARTO'       });        map = L.map('map', {         center: [initLat, initLng],         zoom: 17,         layers: [detailedLayer]       });        const baseMaps = {         "상세 골목/루트 모드 (보행로/화장실)": detailedLayer,         "게이트 집중 모드 (지오펜스 정밀 작업)": cleanLayer       };       L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);        // 대표 POI 마커 (초기 좌표가 있을 때 생성)       if (document.getElementById('lat').value && document.getElementById('lng').value) {         mainMarker = L.marker([initLat, initLng], { draggable: true, title: "대표 POI 좌표" }).addTo(map);         mainMarker.on('dragend', function (e) {           const pos = e.target.getLatLng();           document.getElementById('lat').value = pos.lat.toFixed(6);           document.getElementById('lng').value = pos.lng.toFixed(6);         });       }        updateGateFromInputs(1);       updateGateFromInputs(2);       updateGateFromInputs(3);     }      function setupGateVisual(gateNum, lat, lng, radius) {       if (gateLayers[gateNum].circle) map.removeLayer(gateLayers[gateNum].circle);       if (gateLayers[gateNum].marker) map.removeLayer(gateLayers[gateNum].marker);        if (!lat \vert{}\vert{} !lng \vert{}\vert{} isNaN(lat) \vert{}\vert{} isNaN(lng)) return;        const circle = L.circle([lat, lng], {         color: gateColors[gateNum],         fillColor: gateColors[gateNum],         fillOpacity: 0.22,         weight: 2,         radius: radius \vert{}\vert{} 20       }).addTo(map);        const gateMarker = L.circleMarker([lat, lng], {         radius: 6,         color: '#fff',         fillColor: gateColors[gateNum],         fillOpacity: 1,         weight: 2       }).addTo(map);        gateLayers[gateNum].circle = circle;       gateLayers[gateNum].marker = gateMarker;     }      function updatePinFromInputs() {       const lat = parseFloat(document.getElementById('lat').value);       const lng = parseFloat(document.getElementById('lng').value);       if (!isNaN(lat) && !isNaN(lng)) {         if (!mainMarker) {           mainMarker = L.marker([lat, lng], { draggable: true, title: "대표 POI 좌표" }).addTo(map);           mainMarker.on('dragend', function (e) {             const pos = e.target.getLatLng();             document.getElementById('lat').value = pos.lat.toFixed(6);             document.getElementById('lng').value = pos.lng.toFixed(6);           });         } else {           mainMarker.setLatLng([lat, lng]);         }         map.panTo([lat, lng]);       }     }      function updateGateFromInputs(num) {       const lat = parseFloat(document.getElementById(`gate_${num}_lat`).value);
-      const lng = parseFloat(document.getElementById(`gate_${num}_lng`).value);       const radius = parseFloat(document.getElementById(`gate_${num}_radius`).value) || 20;
+      const cleanSlug = (slugVal || '').toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const poiInput = document.getElementById('poi_id');
+      if (poiInput) poiInput.value = cleanSlug ? 'poi_' + cleanSlug : '';
+      
+      const arrId = cleanSlug ? 'aud_' + cleanSlug + '_ko_arrival' : 'aud_{slug}_ko_arrival';
+      const mainId = cleanSlug ? 'aud_' + cleanSlug + '_ko_main' : 'aud_{slug}_ko_main';
+      
+      const elArrMeta = document.getElementById('aud_arrival_meta');
+      const elMainMeta = document.getElementById('aud_main_meta');
+      if (elArrMeta) elArrMeta.innerText = 'ID: ' + arrId + ' | audio/' + arrId + '.mp3';
+      if (elMainMeta) elMainMeta.innerText = 'ID: ' + mainId + ' | audio/' + mainId + '.mp3';
+    }
 
-      if (!isNaN(lat) && !isNaN(lng)) {
-        setupGateVisual(num, lat, lng, radius);
-      } else {
-        if (gateLayers[num].circle) map.removeLayer(gateLayers[num].circle);
-        if (gateLayers[num].marker) map.removeLayer(gateLayers[num].marker);
+    function handleEnglishNameInput(engVal) {
+      const currentSlug = document.getElementById('slug').value;
+      if (!currentSlug || currentSlug === 'flinders_station') {
+        const autoSlug = (engVal || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+        if (autoSlug) {
+          document.getElementById('slug').value = autoSlug;
+          handleSlugChange(autoSlug);
+        }
       }
     }
 
-    function toggleGateInputs(checked) {
-      [1, 2, 3].forEach(num => {
-        document.getElementById(`gate_${num}_wrapper`).style.opacity = checked ? '1' : '0.4';       });     }      // 4. API Key 안전 관리 (localStorage)     function configureApiKey() {       const currentKey = localStorage.getItem('GEMINI_API_KEY') \vert{}\vert{} '';       const inputKey = prompt(         "Google Gemini API Key를 입력해주세요:\n\n* 브라우저(localStorage)에만 안전하게 보관되며 GitHub에 커밋되지 않습니다.",         currentKey       );       if (inputKey !== null) {         const trimmed = inputKey.trim();         if (trimmed) {           localStorage.setItem('GEMINI_API_KEY', trimmed);           alert("Gemini API Key가 안전하게 저장되었습니다.");         } else {           localStorage.removeItem('GEMINI_API_KEY');           alert("API Key가 삭제되었습니다.");         }       }     }      // 5. [신규 기능 2] 영문명 우선 기준 검색 및 실시간 Gemini API 통신 엔진     async function generateWithGemini() {       const apiKey = localStorage.getItem('GEMINI_API_KEY');       if (!apiKey) {         alert("Gemini API Key가 등록되지 않았습니다.\n먼저 상단의 [🔑 API Key 설정] 버튼을 눌러 키를 1회 등록해 주세요.");         configureApiKey();         return;       }        const nameEn = document.getElementById('name_en').value.trim();       const nameKo = document.getElementById('name_ko').value.trim();        if (!nameEn && !nameKo) {         alert("검색할 명소 명칭을 입력해 주세요.\n(정확도를 위해 [명소 명칭(영어)] 입력을 권장합니다. 예: State Library Victoria, Puffing Billy Railway)");         document.getElementById('name_en').focus();         return;       }        // 영문명을 최우선 기준 검색어로 지정       const primaryQuery = nameEn \vert{}\vert{} nameKo;       const secondaryQuery = nameEn && nameKo ? ` (한국어명: ${nameKo})` : '';
-
-      const btn = document.querySelector('.btn-ai');
-      const originalHtml = btn.innerHTML;
-      btn.innerHTML = "⏳ Gemini 실시간 검색 중...";
-      btn.disabled = true;
-
-      try {
-        const systemPrompt = `당신은 호주 빅토리아주 및 멜버른 전문 오디오 투어 가이드 플랫폼의 수석 테크니컬 아키텍트입니다.
-검색 대상 명소: "${primaryQuery}"${secondaryQuery}
-
-[지시사항]:
-1. 호주 멜버른 및 빅토리아주의 공식 영문 명칭("${primaryQuery}")을 바탕으로 실제 명소의 지리/역사 정보를 정밀 조회하세요.
-2. 마스터 스키마 v4.0 규격을 100% 엄격히 준수하여 완전한 단일 JSON 객체로만 응답하세요.
-3. 백틱(\`\`\`json)이나 부가 설명 없이 순수 JSON 문자열만 출력하세요.
-4. lat, lng는 멜버른/빅토리아 현장의 실제 정밀 GPS 좌표(-37.xxxxxx, 144.xxxxxx)여야 합니다.
-5. arrival_script는 현장에 막 도착한 관광객의 시선을 특정 건축물/경관 요소로 이끄는 1~2문장의 생생한 구어체 멘트여야 합니다.
-6. main_script는 100년 전 역사와 현장 비하인드 스토리를 담은 품격 있는 구어체 오디오 해설(공백제외 350~450자)이어야 합니다.
-
-[JSON 출력 포맷 규격]:
-{
-  "slug": "영문_소문자_스네이크",
-  "name_ko": "한국어 명칭",
-  "name_en": "영어 공식 명칭",
-  "lat": 위도_실수,
-  "lng": 경도_실수,
-  "category": "history, nature, culture, scenic 중 택1",
-  "visit_minutes": 권장체류_정수,
-  "has_gate": true,
-  "gate_1_lat": 주진입로_위도,
-  "gate_1_lng": 주진입로_경도,
-  "gate_1_radius": 20,
-  "gate_2_lat": 보조진입로_위도_또는_null,
-  "gate_2_lng": 보조진입로_경도_또는_null,
-  "gate_2_radius": 20,
-  "gate_3_lat": 광장교차점_위도_또는_null,
-  "gate_3_lng": 광장교차점_경도_또는_null,
-  "gate_3_radius": 20,
-  "story_summary": "배경 역사 요약 3~4줄",
-  "guide_tips": "현장 꿀팁 및 포토존 시선 유도",
-  "admin_notes": "주차, 안전, 인솔 메모 (비공개)",
-  "arrival_script": "도착 안내 구어체 대본",
-  "main_script": "본해설 구어체 대본"
-}`;
-
-        // 스마트 폴백: gemini-2.5-flash 시도 -> 404 발생 시 gemini-2.0-flash 자동 전환
-        const candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash'];
-        let response = null;
-        let lastError = null;
-
-        for (const model of candidateModels) {
-          try {
-            response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'x-goog-api-key': apiKey
-              },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }],
-                generationConfig: {
-                  temperature: 0.2,
-                  responseMimeType: "application/json"
-                }
-              })
-            });
-
-            if (response.ok) break;
-            const errJson = await response.json();
-            lastError = errJson.error?.message || `HTTP ${response.status}`;
-          } catch (e) {
-            lastError = e.message;
-          }
-        }
-
-        if (!response || !response.ok) {
-          throw new Error(lastError || "Gemini 엔드포인트 호출에 실패했습니다.");
-        }
-
-        const resData = await response.json();
-        const rawJson = resData.candidates[0].content.parts[0].text;
-        const aiData = JSON.parse(rawJson);
-
-        // 폼 필드 실시간 자동 맵핑
-        document.getElementById('slug').value = aiData.slug;
-        handleSlugChange(aiData.slug);
-
-        document.getElementById('name_en').value = aiData.name_en;
-        document.getElementById('name_ko').value = aiData.name_ko;
-        document.getElementById('lat').value = aiData.lat;
-        document.getElementById('lng').value = aiData.lng;
-        document.getElementById('category').value = aiData.category || 'history';
-        document.getElementById('visit_minutes').value = aiData.visit_minutes || 20;
-        document.getElementById('has_gate').checked = Boolean(aiData.has_gate);
-
-        document.getElementById('gate_1_lat').value = aiData.gate_1_lat || aiData.lat;
-        document.getElementById('gate_1_lng').value = aiData.gate_1_lng || aiData.lng;
-        document.getElementById('gate_1_radius').value = aiData.gate_1_radius || 20;
-
-        document.getElementById('gate_2_lat').value = aiData.gate_2_lat || '';
-        document.getElementById('gate_2_lng').value = aiData.gate_2_lng || '';
-        document.getElementById('gate_2_radius').value = aiData.gate_2_radius || 20;
-
-        document.getElementById('gate_3_lat').value = aiData.gate_3_lat || '';
-        document.getElementById('gate_3_lng').value = aiData.gate_3_lng || '';
-        document.getElementById('gate_3_radius').value = aiData.gate_3_radius || 20;
-
-        document.getElementById('story_summary').value = aiData.story_summary || '';
-        document.getElementById('guide_tips').value = aiData.guide_tips || '';
-        document.getElementById('admin_notes').value = aiData.admin_notes || '';
-
-        document.getElementById('aud_arrival_script').value = aiData.arrival_script || '';
-        document.getElementById('aud_main_script').value = aiData.main_script || '';
-
-        updateSpeechCalc('ko', aiData.arrival_script || '', 'arrival_calc');
-        updateSpeechCalc('ko', aiData.main_script || '', 'main_calc');
-        updatePinFromInputs();
-        updateGateFromInputs(1);
-        updateGateFromInputs(2);
-        updateGateFromInputs(3);
-
-        alert(`[${aiData.name_en} / ${aiData.name_ko}] 영문 기준 자동 등록 완료!\n\n⚠️ 좌표 검증 규칙: AI 생성 좌표는 오차가 있을 수 있으니, 우측 지도에서 대표 마커와 Gate 1~3의 위치를 눈으로 확인하고 필요 시 드래그하여 미세 보정해 주세요.`);
-      } catch (err) {
-        console.error("Gemini Error:", err);
-        alert(`Gemini API 호출 실패: ${err.message}`);
-      } finally {
-        btn.innerHTML = originalHtml;
-        btn.disabled = false;
-      }
-    }
-
-    // 6. 인메모리 5대 마스터 DB 스토어 (v4.0 규격)
+    // 3. 인메모리 5대 마스터 DB 스토어 (v4.0 규격 보존)
     let masterDB = {
       POIs: [],
       Audios: [],
@@ -534,11 +411,355 @@
       ]
     };
 
-    // 7. POI 저장 (Audios 양방향 바인딩, duration_sec 및 타임스탬프 기록)
+    // 4. Leaflet 맵 & 지오펜스 오버레이
+    let map = null, mainMarker = null;
+    const gateLayers = {
+      1: { circle: null, marker: null },
+      2: { circle: null, marker: null },
+      3: { circle: null, marker: null }
+    };
+    const gateColors = { 1: '#1a73e8', 2: '#34a853', 3: '#e37400' };
+
+    function initMap() {
+      try {
+        const mapEl = document.getElementById('map');
+        if (!mapEl) return;
+
+        const initLat = parseFloat(document.getElementById('lat').value) || -37.8180;
+        const initLng = parseFloat(document.getElementById('lng').value) || 144.9671;
+
+        // 상세 골목길 맵 (OSM France)
+        const detailedLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+          maxZoom: 20,
+          attribution: '&copy; OpenStreetMap France | &copy; OpenStreetMap'
+        });
+
+        // 게이트 집중 모노톤 맵 (CartoDB Light)
+        const cleanLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          maxZoom: 20,
+          subdomains: 'abcd',
+          attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+        });
+
+        map = L.map('map', {
+          center: [initLat, initLng],
+          zoom: 17,
+          layers: [detailedLayer]
+        });
+
+        const baseMaps = {
+          "상세 골목/루트 모드 (보행로/화장실)": detailedLayer,
+          "게이트 집중 모드 (지오펜스 정밀 작업)": cleanLayer
+        };
+        L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
+
+        if (document.getElementById('lat').value && document.getElementById('lng').value) {
+          mainMarker = L.marker([initLat, initLng], { draggable: true, title: "대표 POI 좌표" }).addTo(map);
+          mainMarker.on('dragend', function (e) {
+            const pos = e.target.getLatLng();
+            document.getElementById('lat').value = pos.lat.toFixed(6);
+            document.getElementById('lng').value = pos.lng.toFixed(6);
+          });
+        }
+
+        updateGateFromInputs(1);
+        updateGateFromInputs(2);
+        updateGateFromInputs(3);
+      } catch (e) {
+        console.error("Map initialization error:", e);
+      }
+    }
+
+    function setupGateVisual(gateNum, lat, lng, radius) {
+      if (!map) return;
+      if (gateLayers[gateNum].circle) map.removeLayer(gateLayers[gateNum].circle);
+      if (gateLayers[gateNum].marker) map.removeLayer(gateLayers[gateNum].marker);
+
+      if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+
+      const circle = L.circle([lat, lng], {
+        color: gateColors[gateNum],
+        fillColor: gateColors[gateNum],
+        fillOpacity: 0.22,
+        weight: 2,
+        radius: radius || 20
+      }).addTo(map);
+
+      const gateMarker = L.circleMarker([lat, lng], {
+        radius: 6,
+        color: '#fff',
+        fillColor: gateColors[gateNum],
+        fillOpacity: 1,
+        weight: 2
+      }).addTo(map);
+
+      gateLayers[gateNum].circle = circle;
+      gateLayers[gateNum].marker = gateMarker;
+    }
+
+    function updatePinFromInputs() {
+      if (!map) return;
+      const lat = parseFloat(document.getElementById('lat').value);
+      const lng = parseFloat(document.getElementById('lng').value);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        if (!mainMarker) {
+          mainMarker = L.marker([lat, lng], { draggable: true, title: "대표 POI 좌표" }).addTo(map);
+          mainMarker.on('dragend', function (e) {
+            const pos = e.target.getLatLng();
+            document.getElementById('lat').value = pos.lat.toFixed(6);
+            document.getElementById('lng').value = pos.lng.toFixed(6);
+          });
+        } else {
+          mainMarker.setLatLng([lat, lng]);
+        }
+        map.panTo([lat, lng]);
+      }
+    }
+
+    function updateGateFromInputs(num) {
+      if (!map) return;
+      const lat = parseFloat(document.getElementById('gate_' + num + '_lat').value);
+      const lng = parseFloat(document.getElementById('gate_' + num + '_lng').value);
+      const radius = parseFloat(document.getElementById('gate_' + num + '_radius').value) || 20;
+
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setupGateVisual(num, lat, lng, radius);
+      } else {
+        if (gateLayers[num].circle) map.removeLayer(gateLayers[num].circle);
+        if (gateLayers[num].marker) map.removeLayer(gateLayers[num].marker);
+      }
+    }
+
+    function toggleGateInputs(checked) {
+      [1, 2, 3].forEach(function(num) {
+        const wrap = document.getElementById('gate_' + num + '_wrapper');
+        if (wrap) wrap.style.opacity = checked ? '1' : '0.4';
+      });
+    }
+
+    // 5. 신규 입력 전체 공란 초기화
+    function resetFormToNew() {
+      document.getElementById('name_en').value = '';
+      document.getElementById('name_ko').value = '';
+      document.getElementById('slug').value = '';
+      document.getElementById('poi_id').value = '';
+      document.getElementById('category').value = 'history';
+      document.getElementById('visit_minutes').value = 20;
+      document.getElementById('status').value = 'draft';
+      document.getElementById('lat').value = '';
+      document.getElementById('lng').value = '';
+
+      document.getElementById('has_gate').checked = true;
+      toggleGateInputs(true);
+      document.getElementById('gate_1_lat').value = '';
+      document.getElementById('gate_1_lng').value = '';
+      document.getElementById('gate_1_radius').value = 20;
+      document.getElementById('gate_2_lat').value = '';
+      document.getElementById('gate_2_lng').value = '';
+      document.getElementById('gate_2_radius').value = 20;
+      document.getElementById('gate_3_lat').value = '';
+      document.getElementById('gate_3_lng').value = '';
+      document.getElementById('gate_3_radius').value = 20;
+
+      document.getElementById('story_summary').value = '';
+      document.getElementById('guide_tips').value = '';
+      document.getElementById('admin_notes').value = '';
+      document.getElementById('aud_arrival_script').value = '';
+      document.getElementById('aud_main_script').value = '';
+
+      handleSlugChange('');
+      updateSpeechCalc('ko', '', 'arrival_calc');
+      updateSpeechCalc('ko', '', 'main_calc');
+
+      if (map) {
+        if (mainMarker) {
+          map.removeLayer(mainMarker);
+          mainMarker = null;
+        }
+        [1, 2, 3].forEach(function(num) {
+          if (gateLayers[num].circle) map.removeLayer(gateLayers[num].circle);
+          if (gateLayers[num].marker) map.removeLayer(gateLayers[num].marker);
+          gateLayers[num].circle = null;
+          gateLayers[num].marker = null;
+        });
+      }
+
+      document.getElementById('saved_poi_selector').value = '';
+      document.getElementById('name_en').focus();
+      alert("입력 폼이 초기화되었습니다.\n[명소 명칭(영어)] 또는 [한국어]를 입력하신 후 [✨ AI 원클릭 초안 자동 완성]을 눌러주세요.");
+    }
+
+    // 6. API Key 안전 관리
+    function configureApiKey() {
+      const currentKey = localStorage.getItem('GEMINI_API_KEY') || '';
+      const inputKey = prompt(
+        "Google Gemini API Key를 입력해주세요:\n\n* 브라우저(localStorage)에만 안전하게 보관되며 GitHub에 커밋되지 않습니다.",
+        currentKey
+      );
+      if (inputKey !== null) {
+        const trimmed = inputKey.trim();
+        if (trimmed) {
+          localStorage.setItem('GEMINI_API_KEY', trimmed);
+          alert("Gemini API Key가 안전하게 저장되었습니다.");
+        } else {
+          localStorage.removeItem('GEMINI_API_KEY');
+          alert("API Key가 삭제되었습니다.");
+        }
+      }
+    }
+
+    // 7. 실시간 Gemini API 통신 엔진 (헤더 인증 + 2.5-flash -> 2.0-flash 자동 폴백)
+    async function generateWithGemini() {
+      const apiKey = localStorage.getItem('GEMINI_API_KEY');
+      if (!apiKey) {
+        alert("Gemini API Key가 등록되지 않았습니다.\n먼저 상단의 [🔑 API Key 설정] 버튼을 눌러 키를 1회 등록해 주세요.");
+        configureApiKey();
+        return;
+      }
+
+      const nameEn = document.getElementById('name_en').value.trim();
+      const nameKo = document.getElementById('name_ko').value.trim();
+
+      if (!nameEn && !nameKo) {
+        alert("검색할 명소 명칭을 입력해 주세요.\n(정확도를 위해 [명소 명칭(영어)] 입력을 권장합니다. 예: State Library Victoria, Puffing Billy Railway)");
+        document.getElementById('name_en').focus();
+        return;
+      }
+
+      const primaryQuery = nameEn || nameKo;
+      const secondaryQuery = nameEn && nameKo ? " (한국어명: " + nameKo + ")" : "";
+
+      const btn = document.getElementById('btn_ai_generate');
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = "⏳ Gemini 실시간 검색 중...";
+      btn.disabled = true;
+
+      try {
+        const systemPrompt = "당신은 호주 빅토리아주 및 멜버른 전문 오디오 투어 가이드 플랫폼의 수석 테크니컬 아키텍트입니다.\n" +
+          "검색 대상 명소: \"" + primaryQuery + "\"" + secondaryQuery + "\n\n" +
+          "[지시사항]:\n" +
+          "1. 호주 멜버른 및 빅토리아주의 공식 영문 명칭을 바탕으로 실제 명소의 지리/역사 정보를 정밀 조회하세요.\n" +
+          "2. 마스터 스키마 v4.0 규격을 100% 엄격히 준수하여 완전한 단일 JSON 객체로만 응답하세요.\n" +
+          "3. 마크다운 백틱 없이 순수 JSON 문자열만 출력하세요.\n" +
+          "4. lat, lng는 멜버른 현장의 실제 정밀 GPS 좌표(-37.xxxxxx, 144.xxxxxx)여야 합니다.\n" +
+          "5. arrival_script는 현장에 막 도착한 관광객의 시선을 특정 건축물/경관 요소로 이끄는 1~2문장의 생생한 구어체 멘트여야 합니다.\n" +
+          "6. main_script는 100년 전 역사와 현장 비하인드 스토리를 담은 품격 있는 구어체 오디오 해설(공백제외 350~450자)이어야 합니다.\n\n" +
+          "[JSON 포맷]:\n" +
+          "{\n" +
+          "  \"slug\": \"영문_소문자_스네이크\",\n" +
+          "  \"name_ko\": \"한국어 명칭\",\n" +
+          "  \"name_en\": \"영어 공식 명칭\",\n" +
+          "  \"lat\": 위도_실수,\n" +
+          "  \"lng\": 경도_실수,\n" +
+          "  \"category\": \"history, nature, culture, scenic 중 택1\",\n" +
+          "  \"visit_minutes\": 권장체류_정수,\n" +
+          "  \"has_gate\": true,\n" +
+          "  \"gate_1_lat\": 주진입로_위도,\n" +
+          "  \"gate_1_lng\": 주진입로_경도,\n" +
+          "  \"gate_1_radius\": 20,\n" +
+          "  \"gate_2_lat\": 보조진입로_위도_또는_null,\n" +
+          "  \"gate_2_lng\": 보조진입로_경도_또는_null,\n" +
+          "  \"gate_2_radius\": 20,\n" +
+          "  \"gate_3_lat\": 광장교차점_위도_또는_null,\n" +
+          "  \"gate_3_lng\": 광장교차점_경도_또는_null,\n" +
+          "  \"gate_3_radius\": 20,\n" +
+          "  \"story_summary\": \"배경 역사 요약 3~4줄\",\n" +
+          "  \"guide_tips\": \"현장 꿀팁 및 포토존 시선 유도\",\n" +
+          "  \"admin_notes\": \"주차, 안전, 인솔 메모 (비공개)\",\n" +
+          "  \"arrival_script\": \"도착 안내 구어체 대본\",\n" +
+          "  \"main_script\": \"본해설 구어체 대본\"\n" +
+          "}";
+
+        const candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+        let response = null;
+        let lastError = null;
+
+        for (let i = 0; i < candidateModels.length; i++) {
+          const model = candidateModels[i];
+          try {
+            response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'x-goog-api-key': apiKey
+              },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: systemPrompt }] }],
+                generationConfig: {
+                  temperature: 0.2,
+                  responseMimeType: "application/json"
+                }
+              })
+            });
+
+            if (response.ok) break;
+            const errJson = await response.json();
+            lastError = errJson.error ? errJson.error.message : ("HTTP " + response.status);
+          } catch (e) {
+            lastError = e.message;
+          }
+        }
+
+        if (!response || !response.ok) {
+          throw new Error(lastError || "Gemini 엔드포인트 호출에 실패했습니다.");
+        }
+
+        const resData = await response.json();
+        const rawJson = resData.candidates[0].content.parts[0].text;
+        const aiData = JSON.parse(rawJson);
+
+        document.getElementById('slug').value = aiData.slug || '';
+        handleSlugChange(aiData.slug || '');
+
+        document.getElementById('name_en').value = aiData.name_en || '';
+        document.getElementById('name_ko').value = aiData.name_ko || '';
+        document.getElementById('lat').value = aiData.lat || '';
+        document.getElementById('lng').value = aiData.lng || '';
+        document.getElementById('category').value = aiData.category || 'history';
+        document.getElementById('visit_minutes').value = aiData.visit_minutes || 20;
+        document.getElementById('has_gate').checked = Boolean(aiData.has_gate);
+
+        document.getElementById('gate_1_lat').value = aiData.gate_1_lat || aiData.lat || '';
+        document.getElementById('gate_1_lng').value = aiData.gate_1_lng || aiData.lng || '';
+        document.getElementById('gate_1_radius').value = aiData.gate_1_radius || 20;
+
+        document.getElementById('gate_2_lat').value = aiData.gate_2_lat || '';
+        document.getElementById('gate_2_lng').value = aiData.gate_2_lng || '';
+        document.getElementById('gate_2_radius').value = aiData.gate_2_radius || 20;
+
+        document.getElementById('gate_3_lat').value = aiData.gate_3_lat || '';
+        document.getElementById('gate_3_lng').value = aiData.gate_3_lng || '';
+        document.getElementById('gate_3_radius').value = aiData.gate_3_radius || 20;
+
+        document.getElementById('story_summary').value = aiData.story_summary || '';
+        document.getElementById('guide_tips').value = aiData.guide_tips || '';
+        document.getElementById('admin_notes').value = aiData.admin_notes || '';
+
+        document.getElementById('aud_arrival_script').value = aiData.arrival_script || '';
+        document.getElementById('aud_main_script').value = aiData.main_script || '';
+
+        updateSpeechCalc('ko', aiData.arrival_script || '', 'arrival_calc');
+        updateSpeechCalc('ko', aiData.main_script || '', 'main_calc');
+        updatePinFromInputs();
+        updateGateFromInputs(1);
+        updateGateFromInputs(2);
+        updateGateFromInputs(3);
+
+        alert("[" + (aiData.name_en || aiData.name_ko) + "] 영문 기준 자동 등록 완료!\n\n⚠️ 주의: AI 좌표는 오차가 있을 수 있으니 지도에서 마커와 Gate 1~3 위치를 육안 확인 후 필요 시 드래그해 주세요.");
+      } catch (err) {
+        console.error("Gemini Error:", err);
+        alert("Gemini 호출 실패: " + err.message);
+      } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+      }
+    }
+
+    // 8. POI 저장 (v4.0 스키마 무결성 유지)
     function saveCurrentPoi() {
       const slug = document.getElementById('slug').value.trim();
       if (!slug) {
-        alert('Slug는 필수 입력값입니다. (명소 명칭을 입력하거나 직접 입력해 주세요)');
+        alert('Slug는 필수 입력값입니다.');
         return;
       }
 
@@ -578,48 +799,51 @@
       const mainCalc = calculateSpeechDuration(mainScript, 'ko');
 
       const audioArrival = {
-        audio_id: `aud_${cleanSlug}_ko_arrival`,
+        audio_id: 'aud_' + cleanSlug + '_ko_arrival',
         poi_id: poi_id,
         tour_id: null,
         lang: 'ko',
         segment: 'arrival',
-        title: `${poiRecord.name_ko} 도착 안내`,
+        title: poiRecord.name_ko + ' 도착 안내',
         script: arrivalScript,
         duration_sec: arrivalCalc.seconds,
-        file_path: `audio/aud_${cleanSlug}_ko_arrival.mp3`,
+        file_path: 'audio/aud_' + cleanSlug + '_ko_arrival.mp3',
         script_updated_at: now,
         status: 'draft'
       };
 
       const audioMain = {
-        audio_id: `aud_${cleanSlug}_ko_main`,
+        audio_id: 'aud_' + cleanSlug + '_ko_main',
         poi_id: poi_id,
         tour_id: null,
         lang: 'ko',
         segment: 'main',
-        title: `${poiRecord.name_ko} 본해설`,
+        title: poiRecord.name_ko + ' 본해설',
         script: mainScript,
         duration_sec: mainCalc.seconds,
-        file_path: `audio/aud_${cleanSlug}_ko_main.mp3`,
+        file_path: 'audio/aud_' + cleanSlug + '_ko_main.mp3',
         script_updated_at: now,
         status: 'draft'
       };
 
-      masterDB.POIs = masterDB.POIs.filter(p => p.poi_id !== poi_id);
+      masterDB.POIs = masterDB.POIs.filter(function(p) { return p.poi_id !== poi_id; });
       masterDB.POIs.push(poiRecord);
 
-      masterDB.Audios = masterDB.Audios.filter(a => a.poi_id !== poi_id);
+      masterDB.Audios = masterDB.Audios.filter(function(a) { return a.poi_id !== poi_id; });
       masterDB.Audios.push(audioArrival, audioMain);
 
-      // 브라우저 로컬 자동 백업
-      localStorage.setItem('MASTER_CMS_BACKUP', JSON.stringify(masterDB));
+      try {
+        localStorage.setItem('MASTER_CMS_BACKUP', JSON.stringify(masterDB));
+      } catch (e) {
+        console.warn("Storage quota warning:", e);
+      }
 
       updatePoiSelector();
       document.getElementById('saved_poi_selector').value = poi_id;
-      alert(`[${poiRecord.name_en || poiRecord.name_ko}] POI 및 Audios 저장 완료!\n(현재 메모리에 총 ${masterDB.POIs.length}개 POI 보관 중)`);
+      alert("[" + (poiRecord.name_en || poiRecord.name_ko) + "] 저장 완료!\n(현재 보관 중인 POI: " + masterDB.POIs.length + "개)");
     }
 
-    // 8. JSON 불러오기(Import) 및 목록 갱신 엔진
+    // 9. JSON 불러오기 & 목록 동기화
     function handleImportFile(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -633,16 +857,18 @@
           }
 
           masterDB = imported;
-          localStorage.setItem('MASTER_CMS_BACKUP', JSON.stringify(masterDB));
+          try {
+            localStorage.setItem('MASTER_CMS_BACKUP', JSON.stringify(masterDB));
+          } catch(err) {}
+          
           updatePoiSelector();
-
-          alert(`마스터 JSON을 성공적으로 불러왔습니다!\n- POI: ${masterDB.POIs.length}개\n- Audios: ${masterDB.Audios.length}개`);
+          alert("마스터 JSON을 성공적으로 불러왔습니다!\n- POI: " + masterDB.POIs.length + "개\n- Audios: " + masterDB.Audios.length + "개");
           
           if (masterDB.POIs.length > 0) {
             loadPoiIntoForm(masterDB.POIs[0].poi_id);
           }
         } catch (err) {
-          alert(`불러오기 실패: ${err.message}`);
+          alert("불러오기 실패: " + err.message);
         }
       };
       reader.readAsText(file);
@@ -651,19 +877,21 @@
 
     function updatePoiSelector() {
       const sel = document.getElementById('saved_poi_selector');
+      if (!sel) return;
       sel.innerHTML = '<option value="">-- 새로 작성 또는 명소 선택 --</option>';
-      masterDB.POIs.forEach(p => {
+      masterDB.POIs.forEach(function(p) {
         const opt = document.createElement('option');
         opt.value = p.poi_id;
-        opt.textContent = `${p.name_en ? p.name_en + ' / ' : ''}${p.name_ko} (${p.poi_id})`;
+        opt.textContent = (p.name_en ? p.name_en + ' / ' : '') + p.name_ko + ' (' + p.poi_id + ')';
         sel.appendChild(opt);
       });
-      document.getElementById('poi_count_badge').innerText = masterDB.POIs.length;
+      const badge = document.getElementById('poi_count_badge');
+      if (badge) badge.innerText = masterDB.POIs.length;
     }
 
     function loadPoiIntoForm(poi_id) {
       if (!poi_id) return;
-      const poi = masterDB.POIs.find(p => p.poi_id === poi_id);
+      const poi = masterDB.POIs.find(function(p) { return p.poi_id === poi_id; });
       if (!poi) return;
 
       const slug = poi.poi_id.replace('poi_', '');
@@ -693,8 +921,8 @@
       document.getElementById('guide_tips').value = poi.guide_tips || '';
       document.getElementById('admin_notes').value = poi.admin_notes || '';
 
-      const arrAudio = masterDB.Audios.find(a => a.poi_id === poi_id && a.segment === 'arrival');
-      const mainAudio = masterDB.Audios.find(a => a.poi_id === poi_id && a.segment === 'main');
+      const arrAudio = masterDB.Audios.find(function(a) { return a.poi_id === poi_id && a.segment === 'arrival'; });
+      const mainAudio = masterDB.Audios.find(function(a) { return a.poi_id === poi_id && a.segment === 'main'; });
 
       document.getElementById('aud_arrival_script').value = arrAudio ? arrAudio.script : '';
       document.getElementById('aud_main_script').value = mainAudio ? mainAudio.script : '';
@@ -708,7 +936,7 @@
       updateGateFromInputs(3);
     }
 
-    // 9. 성우/TTS 큐시트 CSV 내보내기
+    // 10. 성우/TTS 큐시트 CSV 내보내기
     function exportCueSheetCSV() {
       if (masterDB.Audios.length === 0) {
         alert('내보낼 오디오 데이터가 없습니다. 먼저 POI 저장을 완료해주세요.');
@@ -717,25 +945,27 @@
 
       let csv = "\uFEFF순번,오디오 ID,유형(Segment),언어,제목,예상초,오디오 파일경로,스크립트(대본)\n";
       const order = { 'greeting': 1, 'arrival': 2, 'main': 3, 'sub': 4, 'departure': 5, 'nav_turn': 6, 'closing': 7 };
-      const sortedAudios = [...masterDB.Audios].sort((a, b) => (order[a.segment] || 99) - (order[b.segment] || 99));
+      const sortedAudios = [...masterDB.Audios].sort(function(a, b) {
+        return (order[a.segment] || 99) - (order[b.segment] || 99);
+      });
 
-      sortedAudios.forEach((item, index) => {
+      sortedAudios.forEach(function(item, index) {
         const calc = calculateSpeechDuration(item.script, item.lang);
-        const cleanScript = `"${item.script.replace(/"/g, '""')}"`;
-        csv += `${index + 1},${item.audio_id},${item.segment},${item.lang},"${item.title}",${calc.seconds},${item.file_path},${cleanScript}\n`;
+        const cleanScript = '"' + item.script.replace(/"/g, '""') + '"';
+        csv += (index + 1) + ',' + item.audio_id + ',' + item.segment + ',' + item.lang + ',"' + item.title + '",' + calc.seconds + ',' + item.file_path + ',' + cleanScript + '\n';
       });
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `cuesheet_export_${Date.now()}.csv`);
+      link.setAttribute('download', 'cuesheet_export_' + Date.now() + '.csv');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
-    // 10. 마스터 JSON 내보내기
+    // 11. 마스터 JSON 내보내기
     function exportMasterJSON() {
       if (masterDB.POIs.length === 0) {
         alert('내보낼 마스터 데이터가 없습니다. 먼저 [현재 POI 저장]을 실행해 주세요.');
@@ -744,27 +974,70 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(masterDB, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `master_schema_v4_${Date.now()}.json`);
+      downloadAnchor.setAttribute("download", 'master_schema_v4_' + Date.now() + '.json');
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
     }
 
-    // 초기화 및 자동 로컬 백업 복원
-    window.addEventListener('DOMContentLoaded', () => {
-      const autoBackup = localStorage.getItem('MASTER_CMS_BACKUP');
-      if (autoBackup) {
-        try {
+    // 12. 돔(DOM) 로드 완료 후 리스너 안전 등록 (버튼 먹통 원천 방지)
+    document.addEventListener('DOMContentLoaded', function() {
+      // 상단 헤더 버튼 바인딩
+      document.getElementById('btn_config_key').addEventListener('click', configureApiKey);
+      document.getElementById('btn_ai_generate').addEventListener('click', generateWithGemini);
+      document.getElementById('btn_export_csv').addEventListener('click', exportCueSheetCSV);
+      document.getElementById('btn_import_json').addEventListener('click', function() {
+        document.getElementById('import_file_input').click();
+      });
+      document.getElementById('import_file_input').addEventListener('change', handleImportFile);
+      document.getElementById('btn_export_json').addEventListener('click', exportMasterJSON);
+      document.getElementById('btn_save_poi').addEventListener('click', saveCurrentPoi);
+      document.getElementById('btn_reset_form').addEventListener('click', resetFormToNew);
+
+      // 입력 필드 실시간 동기화 바인딩
+      document.getElementById('saved_poi_selector').addEventListener('change', function() {
+        loadPoiIntoForm(this.value);
+      });
+      document.getElementById('name_en').addEventListener('input', function() {
+        handleEnglishNameInput(this.value);
+      });
+      document.getElementById('slug').addEventListener('input', function() {
+        handleSlugChange(this.value);
+      });
+      document.getElementById('lat').addEventListener('input', updatePinFromInputs);
+      document.getElementById('lng').addEventListener('input', updatePinFromInputs);
+      document.getElementById('has_gate').addEventListener('change', function() {
+        toggleGateInputs(this.checked);
+      });
+
+      [1, 2, 3].forEach(function(num) {
+        document.getElementById('gate_' + num + '_lat').addEventListener('input', function() { updateGateFromInputs(num); });
+        document.getElementById('gate_' + num + '_lng').addEventListener('input', function() { updateGateFromInputs(num); });
+        document.getElementById('gate_' + num + '_radius').addEventListener('input', function() { updateGateFromInputs(num); });
+      });
+
+      document.getElementById('aud_arrival_script').addEventListener('input', function() {
+        updateSpeechCalc('ko', this.value, 'arrival_calc');
+      });
+      document.getElementById('aud_main_script').addEventListener('input', function() {
+        updateSpeechCalc('ko', this.value, 'main_calc');
+      });
+
+      // 브라우저 백업 복구
+      try {
+        const autoBackup = localStorage.getItem('MASTER_CMS_BACKUP');
+        if (autoBackup) {
           masterDB = JSON.parse(autoBackup);
           updatePoiSelector();
-        } catch (e) {
-          console.error("Auto-backup restore error:", e);
         }
+      } catch(e) {
+        console.error("Backup load error:", e);
       }
 
       handleSlugChange(document.getElementById('slug').value);
       updateSpeechCalc('ko', document.getElementById('aud_arrival_script').value, 'arrival_calc');
       updateSpeechCalc('ko', document.getElementById('aud_main_script').value, 'main_calc');
+      
       initMap();
     });
   </script>
