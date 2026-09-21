@@ -245,7 +245,7 @@
         <textarea id="guide_tips" class="form-control">시계탑 정면 대각선 방향인 세인트 폴 대성당 앞 계단에 서서 올려다볼 때 가장 웅장한 구도가 나옵니다. 트램이 지나가는 순간을 함께 포착해 보세요.</textarea>
       </div>
 
-      <!-- 4. Audios 마스터 양방향 바인딩 대본 -->
+      <!-- 4. Audios 마스터 양방향 바인딩 대본 (Mono 96kbps MP3 표준 규격) -->
       <div class="section-title">
         <span>4. 연계 오디오 대본 (Audios Master 양방향 바인딩)</span>
         <span style="font-size: 0.72rem; color: var(--text-muted);">표준: Mono 96kbps MP3</span>
@@ -277,7 +277,7 @@
         </div>
       </div>
 
-      <!-- 5. 관리자 비공개 데이터 -->
+      <!-- 5. 관리자 비공개 데이터 (admin_notes - 번들 배포 시 자동 제외) -->
       <div class="section-title">5. 관리자 비공개 데이터 (admin_notes)</div>
       <div class="admin-notes-card">
         <div class="form-group" style="margin-bottom: 0;">
@@ -303,7 +303,7 @@
 
       <div class="action-bar">
         <div style="font-size: 0.8rem; color: var(--text-muted);">
-          💡 <strong>맵 조작 가이드</strong>: 우측 상단 레이어 버튼으로 [클린 모드 ↔ 편의시설 상세] 전환이 가능하며, 마커 드래그 시 좌표가 자동 갱신됩니다.
+          💡 <strong>맵 조작 가이드</strong>: 우측 상단 레이어로 [상세 골목/루트 모드 ↔ 게이트 집중 모드] 전환이 가능하며, 마커 드래그 시 좌표가 자동 갱신됩니다.
         </div>
       </div>
     </div>
@@ -319,8 +319,8 @@
      */
 
     // 1. 실시간 낭독 시간 계산 엔진
-    // 한국어: 공백 제외 글자 수 ÷ 5.2 = 초(sec)
-    // 영어: Word Count ÷ 2.3 = 초(sec)
+    // 한국어: 공백 제외 글자 수 ÷ 5.2 = 예상 재생 초(sec)
+    // 영어: Word Count ÷ 2.3 = 예상 재생 초(sec)
     function calculateSpeechDuration(text, lang = 'ko') {
       if (!text || typeof text !== 'string') return { count: 0, seconds: 0 };
       if (lang === 'ko') {
@@ -340,7 +340,7 @@
       document.getElementById(targetElementId).innerText = `${label} | 예상 ${seconds}초`;
     }
 
-    // 2. ID 생성기 및 양방향 동기화
+    // 2. ID 생성기 및 양방향 동기화 (규격: poi_{slug}, aud_{slug}_{lang}_{segment})
     function handleSlugChange(slugVal) {
       const cleanSlug = slugVal.toLowerCase().replace(/[^a-z0-9_]/g, '_');
       document.getElementById('poi_id').value = cleanSlug ? `poi_${cleanSlug}` : '';
@@ -365,33 +365,34 @@
       const initLat = parseFloat(document.getElementById('lat').value) || -37.8180;
       const initLng = parseFloat(document.getElementById('lng').value) || 144.9671;
 
-      // 레이어 1: 지오펜스 게이트 작업에 최적화된 클린 레이어 (Standard OSM - 시각적 노이즈 최소화)
-      const cleanLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-      });
-
-      // 레이어 2: 현장 가이드 및 편의시설(화장실, 주차장, 카페 등) 상세 레이어 (OSM France)
+      // 레이어 1: 상세 골목길 & 루트 파악 레이어 (OSM France - 보행자 골목, 아케이드, 화장실, 주차장 완벽 식별)
       const detailedLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
         maxZoom: 20,
         attribution: '&copy; OpenStreetMap France | &copy; OpenStreetMap'
       });
 
-      // 기본 레이어로 detailedLayer(현재 보시던 상세 타일) 세팅
+      // 레이어 2: 게이트 집중 모드 (CartoDB Light - 상점 노이즈 100% 제거, Gate 1~3 지오펜싱 정밀 조작)
+      const cleanLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 20,
+        subdomains: 'abcd',
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+      });
+
+      // 상세 골목길 모드를 기본값(Default)으로 세팅
       map = L.map('map', {
         center: [initLat, initLng],
         zoom: 17,
         layers: [detailedLayer]
       });
 
-      // 우측 상단 레이어 전환 컨트롤러 (클린 맵 vs 편의시설 상세 맵)
+      // 우측 상단 모드 전환 스위처
       const baseMaps = {
-        "상세 편의시설 모드 (화장실/주차/카페)": detailedLayer,
-        "클린 모드 (게이트 지오펜싱 집중)": cleanLayer
+        "상세 골목/루트 모드 (보행로/화장실)": detailedLayer,
+        "게이트 집중 모드 (지오펜스 정밀 작업)": cleanLayer
       };
       L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
 
-      // 대표 POI 마커 생성 (드래그 가능)
+      // 대표 POI 마커 생성 (드래그 시 폼 좌표 실시간 동기화)
       mainMarker = L.marker([initLat, initLng], { draggable: true, title: "대표 POI 좌표" }).addTo(map);
       mainMarker.on('dragend', function (e) {
         const pos = e.target.getLatLng();
@@ -487,7 +488,7 @@
       ]
     };
 
-    // 5. POI 저장 (Audios 양방향 바인딩 및 관리자 노트 격리)
+    // 5. POI 저장 (Audios 양방향 바인딩 및 비공개 admin_notes 보존)
     function saveCurrentPoi() {
       const slug = document.getElementById('slug').value.trim();
       if (!slug) {
@@ -522,7 +523,7 @@
         status: document.getElementById('status').value
       };
 
-      // 2) Audios 단일 원천 레코드 구성 (양방향 바인딩: 도착/본해설)
+      // 2) Audios 단일 원천 레코드 구성 (양방향 바인딩: arrival, main)
       const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9_]/g, '_');
       const arrivalScript = document.getElementById('aud_arrival_script').value;
       const mainScript = document.getElementById('aud_main_script').value;
@@ -567,7 +568,6 @@
       }
 
       let csv = "\uFEFF순번,오디오 ID,유형(Segment),언어,제목,예상초,오디오 파일경로,스크립트(대본)\n";
-      
       const order = { 'greeting': 1, 'arrival': 2, 'main': 3, 'sub': 4, 'departure': 5, 'nav_turn': 6, 'closing': 7 };
       const sortedAudios = [...masterDB.Audios].sort((a, b) => (order[a.segment] || 99) - (order[b.segment] || 99));
 
@@ -602,7 +602,7 @@
       downloadAnchor.remove();
     }
 
-    // 8. AI 자동 완성 시뮬레이터 (표준 JSON 규격 주입)
+    // 8. AI 자동 완성 연동 시뮬레이터 (표준 JSON 규격 1회 호출 주입)
     function simulateAiGeneration() {
       const name = document.getElementById('name_ko').value || "세인트 폴 대성당";
       alert(`[AI 자동 완성 엔진 가동]\n'${name}'에 대한 마스터 메타데이터 및 낭독 대본 초안을 스키마 v4.0 규격으로 자동 주입합니다.`);
@@ -632,7 +632,6 @@
         main_script: "이 성당은 멜버른 중심부에서 가장 오래된 고딕 양식 건축물 중 하나입니다. 갈색과 황금빛 사암으로 지어진 외벽은 영국의 대표적 건축가 윌리엄 버터필드의 걸작으로 꼽히죠. 실내로 들어서시면 웅장한 파이프 오르간과 벽면을 가득 채운 화려한 스테인드글라스가 방문객을 맞이합니다. 도심의 번잡함을 벗어나 100년 전의 고요한 숨결을 느껴보시기 바랍니다."
       };
 
-      // 폼 바인딩
       document.getElementById('slug').value = aiResponse.slug;
       handleSlugChange(aiResponse.slug);
       
@@ -663,7 +662,6 @@
       document.getElementById('aud_arrival_script').value = aiResponse.arrival_script;
       document.getElementById('aud_main_script').value = aiResponse.main_script;
 
-      // 낭독 계산기 및 맵 오버레이 실시간 갱신
       updateSpeechCalc('ko', aiResponse.arrival_script, 'arrival_calc');
       updateSpeechCalc('ko', aiResponse.main_script, 'main_calc');
       updatePinFromInputs();
@@ -672,7 +670,7 @@
       updateGateFromInputs(3);
     }
 
-    // 페이지 로드 시 구동
+    // 초기화 및 이벤트 리스너 등록
     window.addEventListener('DOMContentLoaded', () => {
       handleSlugChange(document.getElementById('slug').value);
       updateSpeechCalc('ko', document.getElementById('aud_arrival_script').value, 'arrival_calc');
